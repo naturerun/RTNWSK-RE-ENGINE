@@ -1,0 +1,75 @@
+#1b S' S preSurvey E T M F G outSquare B V C B' inSquare inSquareRange #1e
+#2b \\ SPECTRANMETA POSITIVE-SURE-PRE POSITIVE-NEGA-PRE NEGATIVE-SURE-PRE NEGATIVE-NEGA-PRE ) | CLOSURE ? GIVEN LBOUND ULBOUND CLOSURE-NONGREEDY LBOUND-NONGREEDY ULBOUND-NONGREEDY CAP NONPRECAP SPECTRAN TRANMETA UPPERALPHA LOWERALPHA DIGIT SPECMETA REVERSEREF ^ [ ] - OTHERMETA ONEORNOT $ #2e
+#3b S' S #3e
+#4b
+#b S' $1 S #e
+#b S $1 E #e
+#b S $1 preSurvey #e
+#b preSurvey $1 E $2 POSITIVE-SURE-PRE $1 E $2 ) #e
+#b preSurvey $1 E $2 POSITIVE-NEGA-PRE $1 E $2 ) #e
+#b preSurvey $2 NEGATIVE-SURE-PRE $1 E $2 ) $1 E #e
+#b preSurvey $2 NEGATIVE-NEGA-PRE $1 E $2 ) $1 E #e
+#b E $1 E $2 | $1 T #e
+#b E $1 T #e
+#b T $1 T $1 M #e
+#b T $1 M #e
+#b M $1 M $2 CLOSURE #e
+#b M $1 M $2 ? #e
+#b M $1 M $2 GIVEN #e
+#b M $1 M $2 LBOUND #e
+#b M $1 M $2 ULBOUND #e
+#b M $1 M $2 CLOSURE-NONGREEDY #e
+#b M $1 M $2 LBOUND-NONGREEDY #e
+#b M $1 M $2 ULBOUND-NONGREEDY #e
+#b M $1 F #e
+#b F $2 CAP $1 E $2 ) #e
+#b F $1 G #e
+#b F $2 NONPRECAP $1 E $2 ) #e
+#b F $1 outSquare #e
+#b outSquare $2 SPECTRAN #e
+#b outSquare $2 TRANMETA #e
+#b outSquare $2 \\ #e
+#b outSquare $2 SPECTRANMETA #e
+#b outSquare $2 UPPERALPHA #e
+#b outSquare $2 LOWERALPHA #e
+#b outSquare $2 DIGIT #e
+#b outSquare $2 SPECMETA #e
+#b outSquare $2 REVERSEREF #e
+#b outSquare $2 ^ #e
+#b G $2 [ $1 B $1 V $1 C $2 ] #e
+#b V $2 ^ #e
+#b V #e
+#b B $1 B $1 B' #e
+#b B $1 B' #e
+#b B' $1 V $1 inSquareRange $2 - $1 inSquareRange #e
+#b inSquareRange $2 SPECTRAN #e
+#b inSquareRange $2 SPECMETA #e
+#b inSquareRange $2 OTHERMETA #e
+#b inSquareRange $2 UPPERALPHA #e
+#b inSquareRange $2 LOWERALPHA #e
+#b inSquareRange $2 DIGIT #e
+#b inSquareRange $2 CLOSURE #e
+#b inSquareRange $2 \\ #e
+#b inSquareRange $2 SPECTRANMETA #e
+#b inSquareRange $2 ? #e
+#b inSquareRange $2 CAP #e
+#b inSquareRange $2 | #e
+#b inSquareRange $2 ) #e
+#b C $1 C $1 inSquare #e
+#b C $1 inSquare #e
+#b inSquare $1 inSquareRange #e
+#b inSquare $2 NONPRECAP #e
+#b inSquare $2 POSITIVE-SURE-PRE #e
+#b inSquare $2 POSITIVE-NEGA-PRE #e
+#b inSquare $2 NEGATIVE-SURE-PRE #e
+#b inSquare $2 NEGATIVE-NEGA-PRE #e
+#b inSquare $2 ULBOUND #e
+#b inSquare $2 LBOUND #e
+#b inSquare $2 ULBOUND-NONGREEDY #e
+#b inSquare $2 LBOUND-NONGREEDY #e
+#b inSquare $2 CLOSURE-NONGREEDY #e
+#b inSquare $2 GIVEN #e
+#b G $2 [ $1 B $2 ] #e
+#b G $2 [ $1 V $1 C $2 ] #e
+#b M $1 M $2 ONEORNOT #e
+#4e
