@@ -1,0 +1,28 @@
+﻿  regex.cpp
+D:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.30.30705\include\xutility(149,56): warning C4244: “初始化”: 从“_Ty”转换到“_Ty”，可能丢失数据
+          with
+          [
+              _Ty=unsigned __int64
+          ]
+          and
+          [
+              _Ty=long
+          ]
+D:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.30.30705\include\memory(2003): message : 查看对正在编译的函数 模板 实例化“void std::_Construct_in_place<_Ty,unsigned __int64>(_Ty &,unsigned __int64 &&) noexcept”的引用
+          with
+          [
+              _Ty=long
+          ]
+D:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.30.30705\include\memory(2722): message : 查看对正在编译的函数 模板 实例化“std::_Ref_count_obj2<_Ty>::_Ref_count_obj2<unsigned __int64>(unsigned __int64 &&)”的引用
+          with
+          [
+              _Ty=long
+          ]
+D:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.30.30705\include\memory(2723): message : 查看对正在编译的函数 模板 实例化“std::_Ref_count_obj2<_Ty>::_Ref_count_obj2<unsigned __int64>(unsigned __int64 &&)”的引用
+          with
+          [
+              _Ty=long
+          ]
+D:\WSKImportantDataBackUp\ProgramWSK\WSK-RE-ENGINE-BRANCH-BUILD Public\RTNWSK-Regex-Engine\RELALRParsing.h(2401): message : 查看对正在编译的函数 模板 实例化“std::shared_ptr<long> std::make_shared<long,size_t>(size_t &&)”的引用
+D:\WSKImportantDataBackUp\ProgramWSK\WSK-RE-ENGINE-BRANCH-BUILD Public\RTNWSK-Regex-Engine\assistfunction.h(48): warning C4715: “strToChar”: 不是所有的控件路径都返回值
+  RTNWSK-Regex-Engine.vcxproj -> D:\WSKImportantDataBackUp\ProgramWSK\WSK-RE-ENGINE-BRANCH-BUILD Public\x64\Debug\RTNWSK-Regex-Engine.exe

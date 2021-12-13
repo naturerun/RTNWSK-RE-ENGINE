@@ -1,0 +1,16 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "993ad209-83cf-4d6c-84d4-3e6113aa137b": {
+      "ProjectGuid": "993ad209-83cf-4d6c-84d4-3e6113aa137b",
+      "DisplayName": "LALR1",
+      "ColorIndex": 0
+    },
+    "014731e8-1315-4933-b6c7-805b769230a6": {
+      "ProjectGuid": "014731e8-1315-4933-b6c7-805b769230a6",
+      "DisplayName": "RTNWSK-Regex-Engine",
+      "ColorIndex": 1
+    }
+  },
+  "NextColorIndex": 2
+}

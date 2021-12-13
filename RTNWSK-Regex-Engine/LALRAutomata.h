@@ -490,11 +490,7 @@ void LALRAutomata::constructLRKernel()   //计算出的LR(0)项集族保存在继承而来的有
 			{
 				if (static_cast<vector<ProductionBodySymbol>::size_type>(p2->first) < get<1>(productionSet[p->first]).size())
 				{
-					map<string, LALRState *>::iterator q = temp.find(get<1>(productionSet[p->first])[p2->first].symbol);
-					if (q == temp.end())
-					{
-						q = temp.insert(make_pair(get<1>(productionSet[p->first])[p2->first].symbol, new LALRState())).first;
-					}
+					map<string, LALRState*>::iterator q = temp.insert(make_pair(get<1>(productionSet[p->first])[p2->first].symbol, new LALRState())).first;
 					q->second->kernel.insert(make_pair(p->first, map<int, set<string>>())).first->second.insert(make_pair(p2->first + 1, set<string>()));
 				}
 			}
@@ -504,11 +500,7 @@ void LALRAutomata::constructLRKernel()   //计算出的LR(0)项集族保存在继承而来的有
 		{
 			if (static_cast<vector<ProductionBodySymbol>::size_type>(p->second.dotposition) < get<1>(productionSet[p->first]).size())
 			{
-				map<string, LALRState *>::iterator q = temp.find(get<1>(productionSet[p->first])[p->second.dotposition].symbol);
-				if (q == temp.end())
-				{
-					q = temp.insert(make_pair(get<1>(productionSet[p->first])[p->second.dotposition].symbol, new LALRState())).first;
-				}
+				map<string, LALRState*>::iterator q = temp.insert(make_pair(get<1>(productionSet[p->first])[p->second.dotposition].symbol, new LALRState())).first;
 				q->second->kernel.insert(make_pair(p->first, map<int, set<string>>())).first->second.insert(make_pair(p->second.dotposition + 1, set<string>()));
 			}
 		}
@@ -681,24 +673,23 @@ void LALRAutomata::calculateClosureLALR(map<long, map<int, set<string>>> &kernel
 				workqueue.erase(workqueue.begin());
 				for (set<long>::iterator m = TerToPro[get<1>(productionSet[maxp.first])[maxp.second.dotposition].symbol].begin(); m != TerToPro[get<1>(productionSet[maxp.first])[maxp.second.dotposition].symbol].end(); ++m)
 				{
-					map<long, LALRState::attribute>::iterator temp2 = nonkernelset.find(*m);
-					if (temp2 == nonkernelset.end())
+					auto temp2 = nonkernelset.insert(make_pair(*m, LALRState::attribute(0)));
+					if (temp2.second)
 					{
-						temp2 = nonkernelset.insert(make_pair(*m, LALRState::attribute(0))).first;
-						temp2->second.ForwardLookingSign.insert(temp->cbegin(), temp->cend());
-						workqueue.Insert(*temp2);
+						temp2.first->second.ForwardLookingSign.insert(temp->cbegin(), temp->cend());
+						workqueue.Insert(*temp2.first);
 					}
 					else
 					{
-						set<string>::size_type q = temp2->second.ForwardLookingSign.size();
-						temp2->second.ForwardLookingSign.insert(temp->cbegin(), temp->cend());
-						if (temp2->second.ForwardLookingSign.size() != q)
+						set<string>::size_type q = temp2.first->second.ForwardLookingSign.size();
+						temp2.first->second.ForwardLookingSign.insert(temp->cbegin(), temp->cend());
+						if (temp2.first->second.ForwardLookingSign.size() != q)
 						{
-							Priority_Queue<pair<long, LALRState::attribute>>::iterator q2 = workqueue.Insert(*temp2).second;
+							Priority_Queue<pair<long, LALRState::attribute>>::iterator q2 = workqueue.Insert(*temp2.first).second;
 							if (q2 != workqueue.begin())
 							{
 								--q2;
-								if (q2->first == temp2->first)
+								if (q2->first == temp2.first->first)
 								{
 									if (q2->second.dotposition == 0 && q2->first != *(TerToPro[AugGraSS].begin()))
 									{
