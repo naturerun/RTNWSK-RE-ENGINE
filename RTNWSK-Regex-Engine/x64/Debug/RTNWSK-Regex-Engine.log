@@ -1,5 +1,4 @@
-﻿  pch.cpp
-  regex.cpp
+﻿  regex.cpp
 D:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.30.30705\include\xutility(149,56): warning C4244: “初始化”: 从“_Ty”转换到“_Ty”，可能丢失数据
           with
           [
@@ -25,6 +24,6 @@ D:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.30.307
               _Ty=long
           ]
 D:\WSKImportantDataBackUp\ProgramWSK\WSK-RE-ENGINE-BRANCH-BUILD Public\RTNWSK-Regex-Engine\RELALRParsing.h(2401): message : 查看对正在编译的函数 模板 实例化“std::shared_ptr<long> std::make_shared<long,size_t>(size_t &&)”的引用
-  正在生成代码...
 D:\WSKImportantDataBackUp\ProgramWSK\WSK-RE-ENGINE-BRANCH-BUILD Public\RTNWSK-Regex-Engine\assistfunction.h(48): warning C4715: “strToChar”: 不是所有的控件路径都返回值
+  LINK : 没有找到 D:\WSKImportantDataBackUp\ProgramWSK\WSK-RE-ENGINE-BRANCH-BUILD Public\x64\Debug\RTNWSK-Regex-Engine.exe 或上一个增量链接没有生成它；正在执行完全链接
   RTNWSK-Regex-Engine.vcxproj -> D:\WSKImportantDataBackUp\ProgramWSK\WSK-RE-ENGINE-BRANCH-BUILD Public\x64\Debug\RTNWSK-Regex-Engine.exe

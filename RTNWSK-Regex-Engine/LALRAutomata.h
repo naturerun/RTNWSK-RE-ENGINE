@@ -648,17 +648,11 @@ void LALRAutomata::calculateClosureLALR(map<long, map<int, set<string>>> &kernel
 
 				if (appear_second_and_has_empty_symbol == false)
 				{
-					if (temp->empty() == true)
+					if (temp->empty() == true || *(temp->begin()) == "")
 					{
-						temp->insert(workqueue.begin()->second.ForwardLookingSign.cbegin(), workqueue.begin()->second.ForwardLookingSign.cend());
-					}
-					else
-					{
-						if (*(temp->begin()) == "")
-						{
+						if (temp->empty() == false && *(temp->begin()) == "")
 							temp->erase(temp->begin());
-							temp->insert(workqueue.begin()->second.ForwardLookingSign.cbegin(), workqueue.begin()->second.ForwardLookingSign.cend());
-						}
+						temp->insert(workqueue.begin()->second.ForwardLookingSign.cbegin(), workqueue.begin()->second.ForwardLookingSign.cend());
 					}
 				}
 
