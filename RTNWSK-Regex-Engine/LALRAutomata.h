@@ -236,19 +236,19 @@ pair<shared_ptr<map<string, int>>, shared_ptr<vector<vector<LALRTableItem>>>> LA
 			(*LALRTablePtr)[i][temp->second].LALRStateNumber = p->head;
 		}
 	}
-	vector<map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode *>::size_type, map<long, set<int>>>>>> FLKSymbolTran;
-	for (vector<Graph<LALRState, string>::GraphVertexNode *>::size_type i = 0; i < SetOfVertex.size(); ++i)   //计算各LR(0)内核项自发生成的向前看符号并确定LR(0)内核项集之间向前看符号的传播关系
+	vector<map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>>> FLKSymbolTran;
+	for (vector<Graph<LALRState, string>::GraphVertexNode*>::size_type i = 0; i < SetOfVertex.size(); ++i)   //计算各LR(0)内核项自发生成的向前看符号并确定LR(0)内核项集之间向前看符号的传播关系
 	{
-		FLKSymbolTran.push_back(map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode *>::size_type, map<long, set<int>>>>>());
+		FLKSymbolTran.push_back(map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>>());
 		for (map<long, map<int, set<string>>>::iterator p = SetOfVertex[i]->Vertexdatafield->kernel.begin(); p != SetOfVertex[i]->Vertexdatafield->kernel.end(); ++p)
 		{
-			map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode *>::size_type, map<long, set<int>>>>>::iterator x1 = FLKSymbolTran.back().insert(make_pair(p->first, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode *>::size_type, map<long, set<int>>>>())).first;
+			map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>>::iterator x1 = FLKSymbolTran.back().insert(make_pair(p->first, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>())).first;
 			for (map<int, set<string>>::iterator q = p->second.begin(); q != p->second.end(); ++q)
 			{
 				if (q->first != get<1>(productionSet[p->first]).size())
 				{
-					map<int, map<vector<Graph<LALRState, string>::GraphVertexNode *>::size_type, map<long, set<int>>>>::iterator x2 = x1->second.insert(make_pair(q->first, map<vector<Graph<LALRState, string>::GraphVertexNode *>::size_type, map<long, set<int>>>())).first;
-					vector<Graph<LALRState, string>::GraphVertexNode *>::size_type index = (*LALRTablePtr)[i][(*symbolToIndex)[get<1>(productionSet[p->first])[q->first].symbol]].LALRStateNumber;
+					map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>::iterator x2 = x1->second.insert(make_pair(q->first, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>())).first;
+					vector<Graph<LALRState, string>::GraphVertexNode*>::size_type index = (*LALRTablePtr)[i][(*symbolToIndex)[get<1>(productionSet[p->first])[q->first].symbol]].LALRStateNumber;
 					if (get<1>(productionSet[p->first])[q->first].TerminalOrNot == false)
 					{
 						map<long, map<int, set<string>>> kernelitem;
@@ -259,15 +259,13 @@ pair<shared_ptr<map<string, int>>, shared_ptr<vector<vector<LALRTableItem>>>> LA
 						{
 							if (m->second.dotposition != get<1>(productionSet[m->first]).size())
 							{
-								vector<Graph<LALRState, string>::GraphVertexNode *>::size_type index = (*LALRTablePtr)[i][(*symbolToIndex)[get<1>(productionSet[m->first])[m->second.dotposition].symbol]].LALRStateNumber;
+								vector<Graph<LALRState, string>::GraphVertexNode*>::size_type index = (*LALRTablePtr)[i][(*symbolToIndex)[get<1>(productionSet[m->first])[m->second.dotposition].symbol]].LALRStateNumber;
 								set<string>::const_iterator temp = m->second.ForwardLookingSign.find("#");
 								if (temp != m->second.ForwardLookingSign.cend())
 								{
 									((SetOfVertex[index]->Vertexdatafield->kernel)[m->first])[m->second.dotposition + 1].insert(m->second.ForwardLookingSign.cbegin(), temp);
 									((SetOfVertex[index]->Vertexdatafield->kernel)[m->first])[m->second.dotposition + 1].insert(++temp, m->second.ForwardLookingSign.cend());
-									map<vector<Graph<LALRState, string>::GraphVertexNode *>::size_type, map<long, set<int>>>::iterator x3 = x2->second.insert(make_pair(index, map<long, set<int>>())).first;
-									map<long, set<int>>::iterator x4 = x3->second.insert(make_pair(m->first, set<int>())).first;
-									x4->second.insert(m->second.dotposition + 1);
+									x2->second.insert(make_pair(index, map<long, set<int>>())).first->second.insert(make_pair(m->first, set<int>())).first->second.insert(m->second.dotposition + 1);
 								}
 								else
 								{
@@ -275,16 +273,11 @@ pair<shared_ptr<map<string, int>>, shared_ptr<vector<vector<LALRTableItem>>>> LA
 								}
 							}
 						}
-
-						map<vector<Graph<LALRState, string>::GraphVertexNode *>::size_type, map<long, set<int>>>::iterator x3 = x2->second.insert(make_pair(index, map<long, set<int>>())).first;
-						map<long, set<int>>::iterator x4 = x3->second.insert(make_pair(p->first, set<int>())).first;
-						x4->second.insert(q->first + 1);
+						x2->second.insert(make_pair(index, map<long, set<int>>())).first->second.insert(make_pair(p->first, set<int>())).first->second.insert(q->first + 1);
 					}
 					else
 					{
-						(x2->second)[index] = map<long, set<int>>();
-						((x2->second)[index])[p->first] = set<int>();
-						((x2->second)[index])[p->first].insert(q->first + 1);
+						((x2->second)[index] = map<long, set<int>>()).insert(make_pair(p->first, set<int>())).first->second.insert(q->first + 1);
 					}
 				}
 			}
