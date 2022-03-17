@@ -58,14 +58,10 @@ void insertIntoMap(map<size_t, set<size_t>> &beinserted, map<size_t, map<size_t,
 	{
 		for (map<size_t, set<size_t>>::iterator q = p->second.begin(); q != p->second.end(); ++q)
 		{
-			map<size_t, set<size_t>>::iterator m = beinserted.find(q->first);
-			if (m == beinserted.end())
+			auto m = beinserted.insert(make_pair(q->first, set<size_t>(q->second)));
+			if (m.second == false)
 			{
-				beinserted.insert(make_pair(q->first, set<size_t>(q->second)));
-			}
-			else
-			{
-				m->second.insert(q->second.begin(), q->second.end());
+				m.first->second.insert(q->second.begin(), q->second.end());
 			}
 		}
 	}
@@ -73,22 +69,10 @@ void insertIntoMap(map<size_t, set<size_t>> &beinserted, map<size_t, map<size_t,
 
 void insertIntoMap(map<size_t, map<size_t, map<size_t, size_t>>> &end, size_t substart, size_t subend, size_t sub_start_stackindex, size_t sub_end_stackindex)
 {
-	map<size_t, map<size_t, map<size_t, size_t>>>::iterator p = end.find(subend);
-	if (p == end.end())
+	auto p = end.insert(make_pair(subend, map<size_t, map<size_t, size_t>>())).first->second.insert(make_pair(substart, map<size_t, size_t>())).first->second.insert(make_pair(sub_start_stackindex, sub_end_stackindex));
+	if (p.second == false)
 	{
-		end.insert(make_pair(subend, map<size_t, map<size_t, size_t>>())).first->second.insert(make_pair(substart, map<size_t, size_t>())).first->second.insert(make_pair(sub_start_stackindex, sub_end_stackindex));
-	}
-	else
-	{
-		map<size_t, map<size_t, size_t>>::iterator q = p->second.find(substart);
-		if (q == p->second.end())
-		{
-			p->second.insert(make_pair(substart, map<size_t, size_t>())).first->second.insert(make_pair(sub_start_stackindex, sub_end_stackindex));
-		}
-		else
-		{
-			q->second[sub_start_stackindex] = sub_end_stackindex;
-		}
+		p.first->second = sub_end_stackindex;
 	}
 }
 #endif

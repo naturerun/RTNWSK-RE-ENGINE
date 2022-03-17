@@ -285,14 +285,10 @@ shared_ptr<map<unsigned long, vector<RELALRParsing::matchResult>>> RELALRParsing
 				output << "匹配的字符串:" << (*result)[i].result << " 长度:" << (*result)[i].length << endl;
 				output << endl;
 
-				map<unsigned long, vector<matchResult>>::iterator p = result_with_linenum->find(lineNum);
-				if (p == result_with_linenum->end())
+				auto p = result_with_linenum->insert(make_pair(lineNum, vector<matchResult>(1, matchResult((*result)[i]))));
+				if (p.second == false)
 				{
-					result_with_linenum->insert(make_pair(lineNum, vector<matchResult>(1, matchResult((*result)[i]))));
-				}
-				else
-				{
-					p->second.push_back(matchResult((*result)[i]));
+					p.first->second.push_back(matchResult((*result)[i]));
 				}
 				++i;
 				if (i >= result->size())
@@ -443,10 +439,10 @@ void RELALRParsing::CalClosure(const Graph<vertex, edge> &NFA, set<size_t> &init
 		{
 			if (tempptr->Edgedatafield->flag == edge::type::OTHER && tempptr->Edgedatafield->other == "")
 			{
-				if (initial_set.find(tempptr->head) == initial_set.end())
+				auto r = initial_set.insert(tempptr->head);
+				if (r.second)
 				{
 					workqueue.push_back(tempptr->head);
-					initial_set.insert(tempptr->head);
 					tran.insert(make_pair(tempptr->head, set<size_t>())).first->second.insert(workqueue.front());
 				}
 				else
@@ -597,26 +593,12 @@ void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t
 				initial.insert(*state);
 
 				{
-					map<size_t, map<vector<stackNode>::size_type, map<int, bool>>>::iterator p = start.find(*state);
-					map<vector<stackNode>::size_type, map<int, bool>>::iterator tempit;
-					if (p != start.end())
+					pair<map<vector<stackNode>::size_type, map<int, bool>>::iterator, bool> tempit = start.insert(make_pair(*state, map<vector<stackNode>::size_type, map<int, bool>>())).first->second.insert(make_pair(stateStack.size() - 1, map<int, bool>()));
+					if (tempit.second)
 					{
-						map<vector<stackNode>::size_type, map<int, bool>>::iterator tempit = p->second.find(stateStack.size() - 1);
-						if (tempit == p->second.end())
+						for (set<int>::iterator m = NFA.SetOfVertex[*state]->Vertexdatafield->attrSet[vertex::type::SUBEXPRS].begin(); m != NFA.SetOfVertex[*state]->Vertexdatafield->attrSet[vertex::type::SUBEXPRS].end(); ++m)
 						{
-							tempit = p->second.insert(make_pair(stateStack.size() - 1, map<int, bool>())).first;
-							for (set<int>::iterator m = NFA.SetOfVertex[*state]->Vertexdatafield->attrSet[vertex::type::SUBEXPRS].begin(); m != NFA.SetOfVertex[*state]->Vertexdatafield->attrSet[vertex::type::SUBEXPRS].end(); ++m)
-							{
-								tempit->second.insert(make_pair(*m, true));
-							}
-						}
-					}
-					else
-					{
-						tempit = start.insert(make_pair(*state, map<vector<stackNode>::size_type, map<int, bool>>())).first->second.insert(make_pair(stateStack.size() - 1, map<int, bool>())).first;
-						for (set<int>::iterator p = NFA.SetOfVertex[*state]->Vertexdatafield->attrSet[vertex::type::SUBEXPRS].begin(); p != NFA.SetOfVertex[*state]->Vertexdatafield->attrSet[vertex::type::SUBEXPRS].end(); ++p)
-						{
-							tempit->second.insert(make_pair(*p, true));
+							tempit.first->second.insert(make_pair(*m, true));
 						}
 					}
 				}
@@ -645,14 +627,11 @@ void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t
 										temp2[0] = stateStack[i].matchedChar;
 										temp = temp + temp2;
 									}
-									map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>>::iterator tempit = subExpMatch.find(p->first);
-									if (tempit == subExpMatch.end())
+
+									auto r = subExpMatch.insert(make_pair(p->first, make_pair(make_pair(p->second->number, *state), map<vector<stackNode>::size_type, string>()))).first->second.second.insert(make_pair(*q, temp));
+									if (r.second == false)
 									{
-										subExpMatch.insert(make_pair(p->first, make_pair(make_pair(p->second->number, *state), map<vector<stackNode>::size_type, string>()))).first->second.second.insert(make_pair(*q, temp));
-									}
-									else
-									{
-										tempit->second.second[*q] = temp;
+										r.first->second = temp;
 									}
 									insertIntoMap(end, p->second->number, *state, *q, stateStack.size() - 1);
 								}
@@ -2817,58 +2796,17 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				}
 				break;
 				case	54:
+				case	55:
 				{
-					shared_ptr<grammarsymbolnode> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo;
-					if (parsingStack[parsingStack.size() - 1].symbolinfo->Token.second != "")
+					shared_ptr<grammarsymbolnode> tempptr;
+					if (productionNum == 54)
 					{
-						string temp = parsingStack[parsingStack.size() - 1].symbolinfo->Token.first;
-						if (temp == "NONPRECAP" || temp == "POSITIVE-SURE-PRE" || temp == "POSITIVE-NEGA-PRE" || temp == "NEGATIVE-SURE-PRE" || temp == "NEGATIVE-NEGA-PRE" || temp == "ULBOUND" || temp == "LBOUND" || temp == "ULBOUND-NONGREEDY" || temp == "LBOUND-NONGREEDY" || temp == "CLOSURE-NONGREEDY" || temp == "GIVEN")
-						{
-							string temp2 = parsingStack[parsingStack.size() - 1].symbolinfo->Token.second;
-							for (string::size_type i = 0; i < temp2.size(); ++i)
-							{
-								string a(" ");
-								a[0] = temp2[i];
-								tempptr->symbolset.insert(a);
-							}
-						}
-						else if (temp == "SPECMETA" || temp == "OTHERMETA" || temp == "UPPERALPHA" || temp == "LOWERALPHA" || temp == "DIGIT" || temp == "CLOSURE" || temp == "CAP")
-						{
-							tempptr->symbolset.insert(parsingStack[parsingStack.size() - 1].symbolinfo->Token.second);
-						}
-						else if (temp == "SPECTRAN" || temp == "SPECTRANMETA")
-						{
-							if (parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\b" || parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\B" || parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\d" ||
-								parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\D" || parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\s" ||
-								parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\S" || parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\w" ||
-								parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "W")
-							{
-								cout << "ERROR:方括号内存在非法字符" << endl;
-								return false;
-							}
-							tempptr->symbolset.insert(parsingStack[parsingStack.size() - 1].symbolinfo->Token.second);
-						}
+						tempptr = parsingStack[parsingStack.size() - 2].symbolinfo;
 					}
 					else
 					{
-						string temp = parsingStack[parsingStack.size() - 1].symbolinfo->Token.first;
-						if (temp == "\\\\")
-						{
-							tempptr->symbolset.insert(temp);
-						}
-						else if (temp == "?" || temp == "|" || temp == ")")
-						{
-							tempptr->symbolset.insert(temp);
-						}
+						tempptr = make_shared<grammarsymbolnode>(grammarsymbolnode::unterminalsymbol::C);
 					}
-					parsingStack.pop_back(); parsingStack.pop_back();
-					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["C"]].LALRStateNumber, "C", ""));
-					parsingStack.back().symbolinfo = tempptr;
-				}
-				break;
-				case	55:
-				{
-					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(grammarsymbolnode::unterminalsymbol::C);
 					if (parsingStack[parsingStack.size() - 1].symbolinfo->Token.second != "")
 					{
 						string temp = parsingStack[parsingStack.size() - 1].symbolinfo->Token.first;
@@ -2912,6 +2850,10 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						}
 					}
 					parsingStack.pop_back();
+					if (productionNum == 54)
+					{
+						parsingStack.pop_back();
+					}
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["C"]].LALRStateNumber, "C", ""));
 					parsingStack.back().symbolinfo = tempptr;
 				}
