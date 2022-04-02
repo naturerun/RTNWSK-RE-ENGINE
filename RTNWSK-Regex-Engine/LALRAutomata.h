@@ -104,7 +104,7 @@ void LALRAutomata::initgrammar(ifstream &input)  //根据从input读入的文法信息初始
 {
 	enum T { TERMINAL, NONTERMINAL } flag;
 	string current;
-	stack<string> stackforparse;
+	string outerflag;
 	bool TF = true;
 	map<long, tuple<string, vector<ProductionBodySymbol>, set<string>>> ::iterator itp;
 	map<string, set<long>>::iterator itT;
@@ -112,7 +112,7 @@ void LALRAutomata::initgrammar(ifstream &input)  //根据从input读入的文法信息初始
 	{
 		if (current == "#1b" || current == "#2b" || current == "#3b" || current == "#4b")
 		{
-			stackforparse.push(current);
+			outerflag = current;
 			if (current == "#3b")
 			{
 				TF = true;
@@ -120,7 +120,7 @@ void LALRAutomata::initgrammar(ifstream &input)  //根据从input读入的文法信息初始
 		}
 		else if (current == "#1e" || current == "#2e" || current == "#3e" || current == "#4e")
 		{
-			stackforparse.pop();
+			continue;
 		}
 		else if (current == "#b" || current == "$1")
 		{
@@ -138,7 +138,7 @@ void LALRAutomata::initgrammar(ifstream &input)  //根据从input读入的文法信息初始
 		}
 		else
 		{
-			if (stackforparse.top() == "#4b")
+			if (outerflag == "#4b")
 			{
 				if (flag == NONTERMINAL)
 				{
@@ -153,15 +153,7 @@ void LALRAutomata::initgrammar(ifstream &input)  //根据从input读入的文法信息初始
 						else
 						{
 							itp = productionSet.insert(make_pair(itp->first + 1, tuple<string, vector<ProductionBodySymbol>, set<string>>(current, vector<ProductionBodySymbol>(), set<string>()))).first;
-							itT = TerToPro.find(current);
-							if (itT == TerToPro.end())
-							{
-								TerToPro.insert(make_pair(current, set<long>())).first->second.insert(itp->first);
-							}
-							else
-							{
-								itT->second.insert(itp->first);
-							}
+							TerToPro.insert(make_pair(current, set<long>())).first->second.insert(itp->first);
 						}
 					}
 					else
@@ -175,7 +167,7 @@ void LALRAutomata::initgrammar(ifstream &input)  //根据从input读入的文法信息初始
 					get<1>(itp->second).push_back(ProductionBodySymbol(current, true));
 				}
 			}
-			else if (stackforparse.top() == "#3b")
+			else if (outerflag == "#3b")
 			{
 				if (TF)
 				{
@@ -187,7 +179,7 @@ void LALRAutomata::initgrammar(ifstream &input)  //根据从input读入的文法信息初始
 					StartSymbol = current;
 				}
 			}
-			else if (stackforparse.top() == "#2b")
+			else if (outerflag == "#2b")
 			{
 				terminnal.insert(current);
 			}
