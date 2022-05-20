@@ -2599,7 +2599,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						{
 							tempedge = new edge(stoi(temp.substr(1)));
 						}
-						else if (temp2 == "UPPERALPHA" || temp2 == "LOWERALPHA" || temp2 == "DIGIT" || temp2 == "SPECMETA")  ////
+						else if (temp2 == "UPPERALPHA" || temp2 == "LOWERALPHA" || temp2 == "DIGIT" || temp2 == "SPECMETA" || temp2 == "OTHERCHAR")  ////
 						{
 							if (temp == "$")
 							{
@@ -2648,6 +2648,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	32:
 				case	33:
 				case	34:
+				case    35:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::outSquare);
 					parsingStack.pop_back();
@@ -2655,7 +2656,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	35:
+				case	36:
 				{
 					shared_ptr<Graph<vertex, edge>> tempGraph(Copy(*(parsingStack[parsingStack.size() - 4].symbolinfo->subExpr.NFAGraph)));
 					size_t newadd1 = tempGraph->addVertex(new vertex());
@@ -2684,20 +2685,20 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, newadd1, newadd2, grammarsymbolnode::G);
 				}
 				break;
-				case	36:
+				case	37:
 				{
 					parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["V"]].LALRStateNumber, "V", ""));
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>("^", grammarsymbolnode::unterminalsymbol::V);
 				}
 				break;
-				case	37:
+				case	38:
 				{
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["V"]].LALRStateNumber, "V", ""));
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>("", grammarsymbolnode::unterminalsymbol::V);
 				}
 				break;
-				case	38:
+				case	39:
 				{
 					shared_ptr<Graph<vertex, edge>> tempGraph(Copy(*(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph)));
 					size_t newadd1 = tempGraph->addVertex(new vertex());
@@ -2712,7 +2713,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, newadd1, newadd2, grammarsymbolnode::B);
 				}
 				break;
-				case	39:
+				case	40:
 				{
 					shared_ptr<Graph<vertex, edge>> tempGraph = make_shared<Graph<vertex, edge>>();
 					size_t newadd1 = tempGraph->addVertex(new vertex());
@@ -2727,7 +2728,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, start, accept, grammarsymbolnode::B);
 				}
 				break;
-				case	40:
+				case	41:
 				{
 					pair<string, pair<string, string>> temp(parsingStack[parsingStack.size() - 4].symbolinfo->caret, pair<string, string>());
 					if (parsingStack[parsingStack.size() - 3].symbolinfo->Token.second == "")
@@ -2775,7 +2776,6 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(temp.first, temp.second.first, temp.second.second, grammarsymbolnode::BSQuotation);
 				}
 				break;
-				case	41:
 				case	42:
 				case	43:
 				case	44:
@@ -2788,6 +2788,8 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	51:
 				case	52:
 				case	53:
+				case	54:
+				case    55:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::inSquareRange);
 					parsingStack.pop_back();
@@ -2795,11 +2797,11 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	54:
-				case	55:
+				case	56:
+				case	57:
 				{
 					shared_ptr<grammarsymbolnode> tempptr;
-					if (productionNum == 54)
+					if (productionNum == 56)
 					{
 						tempptr = parsingStack[parsingStack.size() - 2].symbolinfo;
 					}
@@ -2820,7 +2822,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 								tempptr->symbolset.insert(a);
 							}
 						}
-						else if (temp == "SPECMETA" || temp == "OTHERMETA" || temp == "UPPERALPHA" || temp == "LOWERALPHA" || temp == "DIGIT" || temp == "CLOSURE" || temp == "CAP")
+						else if (temp == "SPECMETA" || temp == "OTHERMETA" || temp == "UPPERALPHA" || temp == "LOWERALPHA" || temp == "DIGIT" || temp == "CLOSURE" || temp == "CAP" || temp == "OTHERCHAR")
 						{
 							tempptr->symbolset.insert(parsingStack[parsingStack.size() - 1].symbolinfo->Token.second);
 						}
@@ -2850,7 +2852,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						}
 					}
 					parsingStack.pop_back();
-					if (productionNum == 54)
+					if (productionNum == 56)
 					{
 						parsingStack.pop_back();
 					}
@@ -2858,7 +2860,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	56:
+				case	58:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].symbolinfo->Token.first, parsingStack[parsingStack.size() - 1].symbolinfo->Token.second, grammarsymbolnode::unterminalsymbol::inSquare);
 					parsingStack.pop_back();
@@ -2866,8 +2868,6 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	57:
-				case	58:
 				case	59:
 				case	60:
 				case	61:
@@ -2877,6 +2877,8 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	65:
 				case	66:
 				case	67:
+				case	68:
+				case	69:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::inSquare);
 					parsingStack.pop_back();
@@ -2884,7 +2886,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case 68:
+				case 70:
 				{
 					shared_ptr<Graph<vertex, edge>> tempGraph(Copy(*(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph)));
 					size_t newadd1 = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start;
@@ -2894,7 +2896,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, newadd1, newadd2, grammarsymbolnode::G);
 				}
 				break;
-				case 69:
+				case 71:
 				{
 					shared_ptr<Graph<vertex, edge>> tempGraph = make_shared<Graph<vertex, edge>>();
 					size_t newadd1 = tempGraph->addVertex(new vertex());
@@ -2919,7 +2921,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, newadd1, newadd2, grammarsymbolnode::G);
 				}
 				break;
-				case 70:
+				case 72:
 				{
 					shared_ptr<Graph<vertex, edge>> tempG = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph;
 					tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->start_or_end_flag_in_bound = vertex::StartOrEndInBound::START_IN_BOUND;
@@ -3037,6 +3039,19 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 	case '!':
 	case '<':
 	case '}': { string temp("a"); temp[0] = RE[i]; ++i; return { "OTHERMETA", temp }; }
+	case '\"':
+	case '\'':
+	case '#':
+	case '%':
+	case '&':
+	case ',':
+	case '/':
+	case ';':
+	case '>':
+	case '@':
+	case '_':
+	case '`':
+	case '~': { string temp("a"); temp[0] = RE[i]; ++i; return { "OTHERCHAR", temp }; }
 	default: break;
 	}
 
@@ -3084,7 +3099,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			}
 			else if (state == 11)
 			{
-				return{ "ERROR", "" };
+				return{ "OTHERCHAR", "\\" };
 			}
 		}
 
@@ -3101,7 +3116,6 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			{
 				state = 11;
 				++i;
-				matchstack.push(statestack(11, '\\'));
 			}
 			else if (RE[i] == '*' || RE[i] == '+' || RE[i] == '?')
 			{
@@ -3144,7 +3158,6 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			{
 				state = 10;
 				++i;
-				matchstack.push(statestack(10, '}'));
 			}
 			else if (RE[i] == ',')
 			{
@@ -3168,7 +3181,6 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			{
 				state = 10;
 				++i;
-				matchstack.push(statestack(10, '}'));
 			}
 			else if (RE[i] == ',')
 			{
@@ -3372,7 +3384,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			}
 			else
 			{
-				return { "ERROR", "" };
+				return{ "OTHERCHAR", "\\" };
 			}
 			break;
 		}
