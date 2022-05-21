@@ -2954,6 +2954,12 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 	}
 }
 
+void updateState(int& state, int& pre_state, int& pre_pre_state)
+{
+	pre_pre_state = pre_state;
+	pre_state = state;
+}
+
 pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 {
 	if (i == RE.size())
@@ -3075,26 +3081,16 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 	}
 
 	int state = 0;
-	struct statestack
-	{
-		int state;
-		char captruechar;
-		statestack(int s, char c) :state(s), captruechar(c) {}
-	};
-	stack<statestack> matchstack;
-	matchstack.push(statestack(0, 0));
 	string::size_type start = i;
+	int pre_state = 0;
+	int pre_pre_state = 0;
 	while (true)
 	{
 		if (i == RE.size())
 		{
-			if (state == 2 && state == 3 && state == 4 && state == 5 && state == 6)  //??
+			if (state == 2 && state == 3 && state == 4 && state == 5 && state == 6) 
 			{
-				while (matchstack.top().captruechar != '{')
-				{
-					--i;
-					matchstack.pop();
-				}
+				i = start + 1;
 				return { "OTHERMETA", "{" };
 			}
 			else if (state == 11)
@@ -3106,47 +3102,38 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 		switch (state)
 		{
 		case 0:
+			if (!(RE[i] == '{' || RE[i] == '\\' || RE[i] == '*' || RE[i] == '+' || RE[i] == '?'))
+				return { "ERROR", "" };
+			updateState(state, pre_state, pre_pre_state);
 			if (RE[i] == '{')
 			{
 				state = 1;
-				++i;
-				matchstack.push(statestack(1, '{'));
 			}
 			else if (RE[i] == '\\')
 			{
 				state = 11;
-				++i;
-			}
-			else if (RE[i] == '*' || RE[i] == '+' || RE[i] == '?')
-			{
-				state = 7;
-				matchstack.push(statestack(7, RE[i]));
-				++i;
 			}
 			else
 			{
-				return { "ERROR", "" };
+				state = 7;
 			}
+			++i;
 			break;
 		case 1:
 			if (i != RE.size())
 			{
+				if (!(RE[i] == '0' || '1' <= RE[i] && RE[i] <= '9'))
+					return { "OTHERMETA", "{" };
+				updateState(state, pre_state, pre_pre_state);
 				if (RE[i] == '0')
 				{
 					state = 2;
-					++i;
-					matchstack.push(statestack(2, '0'));
-				}
-				else if ('1' <= RE[i] && RE[i] <= '9')
-				{
-					state = 3;
-					matchstack.push(statestack(2, RE[i]));
-					++i;
 				}
 				else
 				{
-					return { "OTHERMETA", "{" };
+					state = 3;
 				}
+				++i;
 			}
 			else
 			{
@@ -3161,124 +3148,95 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			}
 			else if (RE[i] == ',')
 			{
+				updateState(state, pre_state, pre_pre_state);
 				state = 4;
 				++i;
-				matchstack.push(statestack(4, ','));
 			}
 			else
 			{
 				--i;
-				return { "OTHERMETA", "{" };  //??
-			}
-			break;
-		case 3:
-			if (isdigit(RE[i]))
-			{
-				matchstack.push(statestack(3, RE[i]));
-				++i;
-			}
-			else if (RE[i] == '}')
-			{
-				state = 10;
-				++i;
-			}
-			else if (RE[i] == ',')
-			{
-				state = 4;
-				++i;
-				matchstack.push(statestack(4, ','));
-			}
-			else
-			{
-				while (matchstack.top().captruechar != '{')
-				{
-					--i;
-					matchstack.pop();
-				}
 				return { "OTHERMETA", "{" };
 			}
 			break;
+		case 3:
+			if (!(isdigit(RE[i]) || RE[i] == ',' || RE[i] == '}'))
+			{
+				i = start + 1;
+				return { "OTHERMETA", "{" };
+			}
+			if (isdigit(RE[i]) || RE[i] == ',')
+			{
+				updateState(state, pre_state, pre_pre_state);
+				if (isdigit(RE[i]) == false)
+				{
+					state = 4;
+				}
+			}
+			else
+			{
+				state = 10;
+			}
+			++i;
+			break;
 		case 4:
+			if (!(RE[i] == '0' || RE[i] == '}' || '1' <= RE[i] && RE[i] <= '9'))
+			{
+				i = start + 1;
+				return { "OTHERMETA", "{" };
+			}
+			updateState(state, pre_state, pre_pre_state);
 			if (RE[i] == '0')
 			{
 				state = 5;
-				++i;
-				matchstack.push(statestack(5, '0'));
-			}
-			else if ('1' <= RE[i] && RE[i] <= '9')
-			{
-				state = 6;
-				matchstack.push(statestack(6, RE[i]));
-				++i;
 			}
 			else if (RE[i] == '}')
 			{
 				state = 7;
-				++i;
-				matchstack.push(statestack(7, '}'));
 			}
 			else
 			{
-				while (matchstack.top().captruechar != '{')
-				{
-					--i;
-					matchstack.pop();
-				}
-				return { "OTHERMETA", "{" };
+				state = 6;
 			}
+			++i;
 			break;
 		case 5:
 			if (RE[i] == '}')
 			{
+				updateState(state, pre_state, pre_pre_state);
 				state = 7;
 				++i;
-				matchstack.push(statestack(7, '}'));
 			}
 			else
 			{
-				while (matchstack.top().captruechar != '{')
-				{
-					--i;
-					matchstack.pop();
-				}
+				i = start + 1;
 				return { "OTHERMETA", "{" };
 			}
 			break;
 		case 6:
-			if (isdigit(RE[i]))
+			if (!(RE[i] == '}' || isdigit(RE[i])))
 			{
-				matchstack.push(statestack(6, RE[i]));
-				++i;
-			}
-			else if (RE[i] == '}')
+				i = start + 1;
+				return { "OTHERMETA", "{" };
+			}		
+			updateState(state, pre_state, pre_pre_state);
+			if (RE[i] == '}')
 			{
 				state = 7;
-				++i;
-				matchstack.push(statestack(10, '}'));
 			}
-			else
-			{
-				while (matchstack.top().captruechar != '{')
-				{
-					--i;
-					matchstack.pop();
-				}
-				return { "OTHERMETA", "{" };
-			}
+			++i;
 			break;
 		case 7:
 			if (i != RE.size() && RE[i] == '?')
 			{
+				updateState(state, pre_state, pre_pre_state);
 				state = 8;
 				++i;
-				matchstack.push(statestack(8, '?'));
 			}
 			else
 			{
-				if (matchstack.top().captruechar == '}')
+				if (RE[i - 1] == '}')
 				{
-					matchstack.pop();
-					if (matchstack.top().state == 5 || matchstack.top().state == 6)
+					if (pre_state == 5 || pre_state == 6)
 					{
 						return { "ULBOUND", RE.substr(start, i - start) };
 					}
@@ -3287,7 +3245,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 						return { "LBOUND", RE.substr(start, i - start) };
 					}
 				}
-				else if (matchstack.top().captruechar == '?')
+				else if (RE[i - 1] == '?')
 				{
 					return { "?", RE.substr(start, i - start) };
 				}
@@ -3299,14 +3257,11 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			break;
 		case 8:
 		{
-			char c = matchstack.top().captruechar;
-			if (c == '?' && RE[i - 2] != '\\')
+			if (RE[i - 1] == '?')
 			{
-				matchstack.pop();
-				if (matchstack.top().captruechar == '}')
+				if (RE[i - 2] == '}')
 				{
-					matchstack.pop();
-					if (matchstack.top().state == 5 || matchstack.top().state == 6)
+					if (pre_pre_state == 5 || pre_pre_state == 6)
 					{
 						return { "ULBOUND-NONGREEDY", RE.substr(start, i - start) };
 					}
@@ -3315,7 +3270,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 						return { "LBOUND-NONGREEDY", RE.substr(start, i - start) };
 					}
 				}
-				else if (matchstack.top().captruechar == '?')
+				else if (RE[i - 2] == '?')
 				{
 					return { "ONEORNOT", RE.substr(start, i - start) };
 				}
@@ -3324,15 +3279,15 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 					return { "CLOSURE-NONGREEDY", RE.substr(start, i - start) };
 				}
 			}
-			else if (c == 'b' || c == 'B' || c == 'd' || c == 'D' || c == 'f' || c == 'n' || c == 'r' || c == 's' || c == 'S' || c == 't' || c == 'v' || c == 'w' || c == 'W')
+			else if (RE[i - 1] == 'b' || RE[i - 1] == 'B' || RE[i - 1] == 'd' || RE[i - 1] == 'D' || RE[i - 1] == 'f' || RE[i - 1] == 'n' || RE[i - 1] == 'r' || RE[i - 1] == 's' || RE[i - 1] == 'S' || RE[i - 1] == 't' || RE[i - 1] == 'v' || RE[i - 1] == 'w' || RE[i - 1] == 'W')
 			{
 				return { "SPECTRAN", RE.substr(start, i - start) };
 			}
-			else if (c == '*' || c == '+' || c == '?' || c == '^' || c == '$' || c == '.' || c == '(' || c == ')' || c == ':' || c == '=' || c == '!' || c == '<' || c == '|' || c == '[' || c == ']' || c == '-' || c == '{' || c == '}' || c == '\\')
+			else if (RE[i - 1] == '*' || RE[i - 1] == '+' || RE[i - 1] == '?' || RE[i - 1] == '^' || RE[i - 1] == '$' || RE[i - 1] == '.' || RE[i - 1] == '(' || RE[i - 1] == ')' || RE[i - 1] == ':' || RE[i - 1] == '=' || RE[i - 1] == '!' || RE[i - 1] == '<' || RE[i - 1] == '|' || RE[i - 1] == '[' || RE[i - 1] == ']' || RE[i - 1] == '-' || RE[i - 1] == '{' || RE[i - 1] == '}' || RE[i - 1] == '\\')
 			{
-				if (c == '^' || c == '-')
+				if (RE[i - 1] == '^' || RE[i - 1] == '-')
 					return { "SPECTRANMETA", RE.substr(start, i - start) };
-				else if (c == '\\')
+				else if (RE[i - 1] == '\\')
 					return { RE.substr(start, i - start), "" };
 				return { "TRANMETA", RE.substr(start, i - start) };
 			}
@@ -3346,7 +3301,6 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 		case 9:
 			if (i != RE.size() && isdigit(RE[i]))
 			{
-				matchstack.push(statestack(9, RE[i]));
 				++i;
 			}
 			else
@@ -3358,28 +3312,16 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			return { "GIVEN", RE.substr(start, i - start) };
 			break;
 		case 11:
-			if (RE[i] == '*' || RE[i] == '+' || RE[i] == '?' || RE[i] == '^' || RE[i] == '$' || RE[i] == '.' || RE[i] == '(' || RE[i] == ')' || RE[i] == ':' || RE[i] == '=' || RE[i] == '!' || RE[i] == '<' || RE[i] == '|' || RE[i] == '[' || RE[i] == ']' || RE[i] == '-' || RE[i] == '{' || RE[i] == '}' || RE[i] == '\\')
+			if (RE[i] == '*' || RE[i] == '+' || RE[i] == '?' || RE[i] == '^' || RE[i] == '$' || RE[i] == '.' || RE[i] == '(' || RE[i] == ')' || RE[i] == ':' || RE[i] == '=' || RE[i] == '!' || RE[i] == '<' || RE[i] == '|' || RE[i] == '[' || RE[i] == ']' || RE[i] == '-' || RE[i] == '{' || RE[i] == '}' || RE[i] == '\\'
+				|| RE[i] == 'b' || RE[i] == 'B' || RE[i] == 'd' || RE[i] == 'D' || RE[i] == 'f' || RE[i] == 'n' || RE[i] == 'r' || RE[i] == 's' || RE[i] == 'S' || RE[i] == 't' || RE[i] == 'v' || RE[i] == 'w' || RE[i] == 'W' || RE[i] == '0')
 			{
+				updateState(state, pre_state, pre_pre_state);
 				state = 8;
-				matchstack.push(statestack(8, RE[i]));
-				++i;
-			}
-			else if (RE[i] == 'b' || RE[i] == 'B' || RE[i] == 'd' || RE[i] == 'D' || RE[i] == 'f' || RE[i] == 'n' || RE[i] == 'r' || RE[i] == 's' || RE[i] == 'S' || RE[i] == 't' || RE[i] == 'v' || RE[i] == 'w' || RE[i] == 'W')
-			{
-				state = 8;
-				matchstack.push(statestack(8, RE[i]));
-				++i;
-			}
-			else if (RE[i] == '0')
-			{
-				state = 8;
-				matchstack.push(statestack(8, '0'));
 				++i;
 			}
 			else if ('1' <= RE[i] && RE[i] <= '9')
 			{
 				state = 9;
-				matchstack.push(statestack(9, RE[i]));
 				++i;
 			}
 			else
