@@ -3057,6 +3057,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 	case '@':
 	case '_':
 	case '`':
+	case ' ':
 	case '~': { string temp("a"); temp[0] = RE[i]; ++i; return { "OTHERCHAR", temp }; }
 	default: break;
 	}
