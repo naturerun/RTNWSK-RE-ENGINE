@@ -1,5 +1,5 @@
 #1b S' S preSurvey E T M F G outSquare B V C B' inSquare inSquareRange #1e
-#2b \\ SPECTRANMETA POSITIVE-SURE-PRE POSITIVE-NEGA-PRE NEGATIVE-SURE-PRE NEGATIVE-NEGA-PRE ) | CLOSURE ? GIVEN LBOUND ULBOUND CLOSURE-NONGREEDY LBOUND-NONGREEDY ULBOUND-NONGREEDY CAP NONPRECAP SPECTRAN TRANMETA UPPERALPHA LOWERALPHA DIGIT SPECMETA REVERSEREF ^ [ ] - OTHERMETA ONEORNOT OTHERCHAR $ #2e
+#2b \\ SPECTRANMETA POSITIVE-SURE-PRE POSITIVE-NEGA-PRE NEGATIVE-SURE-PRE NEGATIVE-NEGA-PRE ) | CLOSURE ? GIVEN LBOUND ULBOUND CLOSURE-NONGREEDY LBOUND-NONGREEDY ULBOUND-NONGREEDY CAP NONPRECAP SPECTRAN TRANMETA UPPERALPHA LOWERALPHA DIGIT SPECMETA REVERSEREF ^ [ ] - OTHERMETA ONEORNOT OTHERCHAR OCT_HEX_TRAN $ #2e
 #3b S' S #3e
 #4b
 #b S' $1 S #e
@@ -37,6 +37,9 @@
 #b outSquare $2 REVERSEREF #e
 #b outSquare $2 ^ #e
 #b outSquare $2 OTHERCHAR #e
+#b outSquare $2 OCT_HEX_TRAN #e
+#b G $2 [ $1 B $2 ] #e
+#b G $2 [ $1 V $1 C $2 ] #e
 #b G $2 [ $1 B $1 V $1 C $2 ] #e
 #b V $2 ^ #e
 #b V #e
@@ -57,6 +60,7 @@
 #b inSquareRange $2 | #e
 #b inSquareRange $2 ) #e
 #b inSquareRange $2 OTHERCHAR #e
+#b inSquareRange $2 OCT_HEX_TRAN #e
 #b C $1 C $1 inSquare #e
 #b C $1 inSquare #e
 #b inSquare $1 inSquareRange #e
@@ -71,7 +75,8 @@
 #b inSquare $2 LBOUND-NONGREEDY #e
 #b inSquare $2 CLOSURE-NONGREEDY #e
 #b inSquare $2 GIVEN #e
-#b G $2 [ $1 B $2 ] #e
-#b G $2 [ $1 V $1 C $2 ] #e
+#b inSquare $2 ONEORNOT #e
+#b inSquare $2 REVERSEREF #e
+#b inSquare $2 TRANMETA #e
 #b M $1 M $2 ONEORNOT #e
 #4e

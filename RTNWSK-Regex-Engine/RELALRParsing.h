@@ -1883,6 +1883,168 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 	}
 	return finalresult;
 }
+struct compare
+{
+	bool operator()(const pair<string, pair<string, string>>& left, const pair<string, pair<string, string>>& right) const
+	{
+		pair<string, pair<char, char>> left_copy = make_pair(left.first, make_pair(strToChar(left.second.first), strToChar(left.second.second)));
+		pair<string, pair<char, char>> right_copy = make_pair(right.first, make_pair(strToChar(right.second.first), strToChar(right.second.second)));
+		return left_copy < right_copy;
+    }
+};
+pair<string, pair<string, string>> merge_char_interval(const pair<string, pair<string, string>> &left, const pair<string, pair<string, string>>& right)
+{
+	char left_first = strToChar(left.second.first);
+	char left_second = strToChar(left.second.second);
+	char right_first = strToChar(right.second.first);
+	char right_second = strToChar(right.second.second);
+	if (left.first == "")
+	{
+		if (right.first == "")
+		{
+			if (left_second < right_first || right_second < left_first)
+			{
+				return make_pair("", make_pair("", ""));
+			}
+			else if (left_first >= right_first && left_second <= right_second)
+			{
+				return make_pair("", make_pair(right.second.first, right.second.second));  //
+			}
+			else if (right_first >= left_first && right_second <= left_second)
+			{
+				return make_pair("", make_pair(left.second.first, left.second.second));  //
+			}
+			else if (left_first < right_first)
+			{
+				return make_pair("", make_pair(left.second.first, right.second.second));
+			}
+			else
+			{
+				return make_pair("", make_pair(right.second.first, left.second.second));
+			}
+		}
+		else
+		{ 
+			if (left_second < right_first || right_second < left_first)
+			{
+				return make_pair("^", make_pair(right.second.first, right.second.second));  //
+			}
+			else if (left_first >= right_first && left_second <= right_second)
+			{
+				if (left_first == right_first)
+				{
+					if (left_second == right_second)
+					{
+						return make_pair("", make_pair("\0", string(1, static_cast<char>(127))));
+					}
+					else
+					{
+						return make_pair("^", make_pair(string(1, left_second + 1), right.second.second));
+					}
+				}
+				else
+				{
+					if (left_second == right_second)
+					{
+						return make_pair("^", make_pair(right.second.first, string(1, left_first - 1)));
+					}
+					else
+					{
+						if (right_first == '\0' && right_second == static_cast<char>(127))
+						    return make_pair("", make_pair(left.second.first, left.second.second));
+						else
+							return make_pair("", make_pair("", ""));
+					}
+				}
+			}
+			else if (right_first >= left_first && right_second <= left_second)
+			{
+				return make_pair("", make_pair("\0", string(1, static_cast<char>(127))));
+			}
+			else if (left_first < right_first)
+			{
+				return make_pair("^", make_pair(string(1, left_second + 1), right.second.second));
+			}
+			else
+			{
+				return make_pair("^", make_pair(right.second.first, string(1, left_first - 1)));
+			}
+		}
+	}
+	else
+	{
+		if (right.first == "")
+		{
+			if (left_second < right_first || right_second < left_first)
+			{
+				return make_pair("^", make_pair(left.second.first, left.second.second));
+			}
+			else if (left_first >= right_first && left_second <= right_second)
+			{
+				return make_pair("", make_pair("\0", string(1, static_cast<char>(127))));
+			}
+			else if (right_first >= left_first && right_second <= left_second)
+			{
+				if (left_first == right_first)
+				{
+					if (left_second == right_second)
+					{
+						return make_pair("", make_pair("\0", string(1, static_cast<char>(127))));
+					}
+					else
+					{
+						return make_pair("^", make_pair(string(1, right_second + 1), left.second.second));
+					}
+				}
+				else
+				{
+					if (left_second == right_second)
+					{
+						return make_pair("^", make_pair(left.second.first, string(1, right_first - 1)));
+					}
+					else
+					{
+						if (left_first == '\0' && left_second == static_cast<char>(127))
+						    return make_pair("", make_pair(right.second.first, right.second.second));  
+						else
+							return make_pair("", make_pair("", ""));
+					}
+				}
+			}
+			else if (left_first < right_first)
+			{
+				return make_pair("^", make_pair(left.second.first, string(1, right_first - 1)));
+			}
+			else
+			{
+				return make_pair("^", make_pair(string(1, right_second + 1), left.second.second));
+			}
+		}
+		else
+		{
+			if (left_second < right_first || right_second < left_first)
+			{
+				return make_pair("", make_pair("\0", string(1, static_cast<char>(127))));
+			}
+			else if (left_first >= right_first && left_second <= right_second)
+			{
+				return make_pair("^", make_pair(left.second.first, left.second.second));
+			}
+			else if (right_first >= left_first && right_second <= left_second)
+			{
+				return make_pair("^", make_pair(right.second.first, right.second.second));
+			}
+			else if (left_first < right_first)
+			{
+				return make_pair("^", make_pair(right.second.first, left.second.second));
+			}
+			else
+			{
+				return make_pair("^", make_pair(left.second.first, right.second.second));
+			}
+		}
+	}
+}
 
 bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 {
@@ -1900,8 +2062,9 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 		{
 			NFA subExpr;  //子表达式NFA
 			pair<string, string> Token;
-			set<string> symbolset;
+			set<char> symbolset;
 			pair<string, pair<string, string>> range;
+			shared_ptr<set<pair<string, pair<string, string>>, compare>> char_interval_set;
 			string caret;
 		};
 		shared_ptr<set<int>> ReverRefSet = nullptr;
@@ -1911,6 +2074,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 		grammarsymbolnode(unterminalsymbol f) :symbolset(), flag(f) {}
 		grammarsymbolnode(const string &car, const string &first, const string &second, unterminalsymbol f) :range(car, pair<string, string>(first, second)), flag(f) {}
 		grammarsymbolnode(const string &c, unterminalsymbol f) :caret(c), flag(f) {}
+		grammarsymbolnode(shared_ptr<set<pair<string, pair<string, string>>, compare>>& c) :char_interval_set(c), flag(unterminalsymbol::B) {}
 
 		~grammarsymbolnode()
 		{
@@ -1919,9 +2083,9 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 			case inSquare:
 			case inSquareRange:
 			case outSquare:Token.~pair<string, string>(); break;
-			case C: symbolset.~set<string>(); break;
+			case C: symbolset.~set<char>(); break;
 			case BSQuotation: range.~pair<string, pair<string, string>>(); break;
-			case B:
+			case B: char_interval_set.~shared_ptr<set<pair<string, pair<string, string>>, compare>>(); break;
 			case S:
 			case preSurvey:
 			case E:
@@ -2649,6 +2813,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	33:
 				case	34:
 				case    35:
+				case    36:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::outSquare);
 					parsingStack.pop_back();
@@ -2656,79 +2821,199 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	36:
+				case    37:
+				case    38:
+				case	39:
 				{
-					shared_ptr<Graph<vertex, edge>> tempGraph(Copy(*(parsingStack[parsingStack.size() - 4].symbolinfo->subExpr.NFAGraph)));
-					size_t newadd1 = tempGraph->addVertex(new vertex());
-					size_t newadd2 = tempGraph->addVertex(new vertex());
-					bool temp;
-					if (parsingStack[parsingStack.size() - 3].symbolinfo->caret == "")
-					{
-						temp = false;
+					shared_ptr<Graph<vertex, edge>> tempGraph = make_shared<Graph<vertex, edge>>();
+					size_t start = tempGraph->addVertex(new vertex());
+					size_t accept = tempGraph->addVertex(new vertex());
+					shared_ptr<set<pair<string, pair<string, string>>, compare>> cis = parsingStack[parsingStack.size() - 4].symbolinfo->char_interval_set;
+					if (productionNum == 37 || productionNum == 39)
+					{					
+						while (true)
+						{
+							bool merged_over = true;
+							for (set<pair<string, pair<string, string>>, compare>::iterator run_left = cis->begin(); run_left != cis->end();)
+							{
+								bool flag = false;
+								set<pair<string, pair<string, string>>, compare>::iterator run_right = run_left;
+								for (++run_right; run_right != cis->end();)
+								{
+									pair<string, pair<string, string>> merge_result = merge_char_interval(*run_left, *run_right);
+									if (merge_result.second.first != "")
+									{
+										merged_over = false;
+										auto r = cis->insert(merge_result);
+										if (r.second == false)
+										{
+											if (r.first == run_left)
+											{
+												set<pair<string, pair<string, string>>, compare>::iterator t_v = run_right;
+												++run_right;
+												cis->erase(t_v);
+												continue;
+											}
+											else if (r.first == run_right)
+											{
+												set<pair<string, pair<string, string>>, compare>::iterator t_v = run_left;
+												++run_left;
+												cis->erase(t_v);
+												run_right = run_left;
+												++run_right;
+												continue;
+											}
+										}
+
+										set<pair<string, pair<string, string>>, compare>::iterator t_l = run_left;
+										++run_left;
+										if (run_left == run_right)
+										{
+											++run_right;
+											cis->erase(t_l);
+											cis->erase(run_left);
+											if (run_right == cis->end())
+											{
+												flag = true;
+												run_left = cis->end();
+												break;
+											}
+											else
+											{
+												run_left = run_right;
+												++run_right;
+												continue;
+											}
+										}
+										cis->erase(t_l);
+										set<pair<string, pair<string, string>>, compare>::iterator t_r = run_right;
+										run_right = run_left;
+										++run_right;
+										if (run_right == t_r)
+										{
+											++run_right;
+										}
+										cis->erase(t_r);
+									}
+									else
+									{
+										++run_right;
+									}
+								}
+								if (flag == false)
+									++run_left;
+							}
+							if (merged_over)
+								break;
+						}
+
+						for (set<pair<string, pair<string, string>>, compare>::iterator run = cis->begin(); run != cis->end(); ++run)
+						{
+							size_t newadd1 = tempGraph->addVertex(new vertex());
+							size_t newadd2 = tempGraph->addVertex(new vertex());
+							tempGraph->addEdge(newadd1, newadd2, new edge(run->first, strToChar(run->second.first), strToChar(run->second.second)));
+							tempGraph->addEdge(start, newadd1, new edge("", edge::type::OTHER));
+							tempGraph->addEdge(newadd2, accept, new edge("", edge::type::OTHER));
+						}
 					}
-					else
+		
+					if (productionNum == 38 || productionNum == 39)
 					{
-						temp = true;
+						if (productionNum == 39)
+						{
+							for (set<char>::iterator run = parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.begin(); run != parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.end(); )
+							{
+								set<pair<string, pair<string, string>>, compare>::iterator r = cis->begin();
+								for (; r != cis->end(); ++r)
+								{
+									if (r->first == "")
+									{
+										if (strToChar(r->second.first) <= *run && strToChar(r->second.second) >= *run)
+										{
+											run = parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.erase(run);
+											break;
+										}
+									}
+									else
+									{
+										if (strToChar(r->second.first) > *run && strToChar(r->second.second) < *run)
+										{
+											run = parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.erase(run);
+											break;
+										}
+									}
+								}
+								if (r == cis->end())
+								{
+									++run;
+								}
+							}
+						}
+
+						if (productionNum == 38 || parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.empty() == false)
+						{
+							size_t newadd1 = tempGraph->addVertex(new vertex());
+							size_t newadd2 = tempGraph->addVertex(new vertex());
+							bool temp;
+							if (parsingStack[parsingStack.size() - 3].symbolinfo->caret == "")
+							{
+								temp = false;
+							}
+							else
+							{
+								temp = true;
+							}
+							edge* tempptr = new edge(temp);
+							tempptr->charset.second = parsingStack[parsingStack.size() - 2].symbolinfo->symbolset;
+							tempGraph->addEdge(newadd1, newadd2, tempptr);
+							tempGraph->addEdge(start, newadd1, new edge("", edge::type::OTHER));
+							tempGraph->addEdge(newadd2, accept, new edge("", edge::type::OTHER));
+						}
 					}
-					edge *tempptr = new edge(temp);
-					for (set<string>::iterator p = parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.begin(); p != parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.end(); ++p)
+
+					parsingStack.pop_back(); parsingStack.pop_back(); parsingStack.pop_back(); 
+					if (productionNum == 38 || productionNum == 39)
 					{
-						tempptr->charset.second.insert(strToChar(*p));
+						parsingStack.pop_back(); 
+						if (productionNum == 39)
+						   parsingStack.pop_back();
 					}
-					tempGraph->addEdge(newadd1, newadd2, tempptr);
-					tempGraph->addEdge(parsingStack[parsingStack.size() - 4].symbolinfo->subExpr.start, newadd1, new edge("", edge::type::OTHER));
-					tempGraph->addEdge(newadd2, parsingStack[parsingStack.size() - 4].symbolinfo->subExpr.accept, new edge("", edge::type::OTHER));
-					newadd1 = parsingStack[parsingStack.size() - 4].symbolinfo->subExpr.start;
-					newadd2 = parsingStack[parsingStack.size() - 4].symbolinfo->subExpr.accept;
-					parsingStack.pop_back(); parsingStack.pop_back(); parsingStack.pop_back(); parsingStack.pop_back(); parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["G"]].LALRStateNumber, "G", ""));
-					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, newadd1, newadd2, grammarsymbolnode::G);
+					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, start, accept, grammarsymbolnode::G);
 				}
 				break;
-				case	37:
+				case	40:
 				{
 					parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["V"]].LALRStateNumber, "V", ""));
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>("^", grammarsymbolnode::unterminalsymbol::V);
 				}
 				break;
-				case	38:
+				case	41:
 				{
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["V"]].LALRStateNumber, "V", ""));
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>("", grammarsymbolnode::unterminalsymbol::V);
 				}
 				break;
-				case	39:
+				case	42:
 				{
-					shared_ptr<Graph<vertex, edge>> tempGraph(Copy(*(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph)));
-					size_t newadd1 = tempGraph->addVertex(new vertex());
-					size_t newadd2 = tempGraph->addVertex(new vertex());
-					tempGraph->addEdge(newadd1, newadd2, new edge(parsingStack[parsingStack.size() - 1].symbolinfo->range.first, strToChar(parsingStack[parsingStack.size() - 1].symbolinfo->range.second.first), strToChar(parsingStack[parsingStack.size() - 1].symbolinfo->range.second.second)));
-					tempGraph->addEdge(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start, newadd1, new edge("", edge::type::OTHER));
-					tempGraph->addEdge(newadd2, parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept, new edge("", edge::type::OTHER));
-					newadd1 = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start;
-					newadd2 = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept;
+					shared_ptr<set<pair<string, pair<string, string>>, compare>> cis = parsingStack[parsingStack.size() - 2].symbolinfo->char_interval_set;
+					cis->insert(parsingStack[parsingStack.size() - 1].symbolinfo->range);
 					parsingStack.pop_back(); parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["B"]].LALRStateNumber, "B", ""));
-					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, newadd1, newadd2, grammarsymbolnode::B);
+					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(cis);
 				}
 				break;
-				case	40:
+				case	43:
 				{
-					shared_ptr<Graph<vertex, edge>> tempGraph = make_shared<Graph<vertex, edge>>();
-					size_t newadd1 = tempGraph->addVertex(new vertex());
-					size_t newadd2 = tempGraph->addVertex(new vertex());
-					tempGraph->addEdge(newadd1, newadd2, new edge(parsingStack[parsingStack.size() - 1].symbolinfo->range.first, strToChar(parsingStack[parsingStack.size() - 1].symbolinfo->range.second.first), strToChar(parsingStack[parsingStack.size() - 1].symbolinfo->range.second.second)));
-					size_t start = tempGraph->addVertex(new vertex());
-					size_t accept = tempGraph->addVertex(new vertex());
-					tempGraph->addEdge(start, newadd1, new edge("", edge::type::OTHER));
-					tempGraph->addEdge(newadd2, accept, new edge("", edge::type::OTHER));
+					shared_ptr<set<pair<string, pair<string, string>>, compare>> cis = make_shared<set<pair<string, pair<string, string>>, compare>>();
+					cis->insert(parsingStack[parsingStack.size() - 1].symbolinfo->range);
 					parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["B"]].LALRStateNumber, "B", ""));
-					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, start, accept, grammarsymbolnode::B);
+					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(cis);
 				}
 				break;
-				case	41:
+				case	44:
 				{
 					pair<string, pair<string, string>> temp(parsingStack[parsingStack.size() - 4].symbolinfo->caret, pair<string, string>());
 					if (parsingStack[parsingStack.size() - 3].symbolinfo->Token.second == "")
@@ -2776,9 +3061,6 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(temp.first, temp.second.first, temp.second.second, grammarsymbolnode::BSQuotation);
 				}
 				break;
-				case	42:
-				case	43:
-				case	44:
 				case	45:
 				case	46:
 				case	47:
@@ -2789,7 +3071,11 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	52:
 				case	53:
 				case	54:
-				case    55:
+				case	55:
+				case	56:
+				case	57:
+				case    58:
+				case    59:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::inSquareRange);
 					parsingStack.pop_back();
@@ -2797,11 +3083,11 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	56:
-				case	57:
+				case	60:
+				case	61:
 				{
 					shared_ptr<grammarsymbolnode> tempptr;
-					if (productionNum == 56)
+					if (productionNum == 60)
 					{
 						tempptr = parsingStack[parsingStack.size() - 2].symbolinfo;
 					}
@@ -2809,50 +3095,43 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					{
 						tempptr = make_shared<grammarsymbolnode>(grammarsymbolnode::unterminalsymbol::C);
 					}
+
+					string temp = parsingStack[parsingStack.size() - 1].symbolinfo->Token.first;
 					if (parsingStack[parsingStack.size() - 1].symbolinfo->Token.second != "")
 					{
-						string temp = parsingStack[parsingStack.size() - 1].symbolinfo->Token.first;
-						if (temp == "NONPRECAP" || temp == "POSITIVE-SURE-PRE" || temp == "POSITIVE-NEGA-PRE" || temp == "NEGATIVE-SURE-PRE" || temp == "NEGATIVE-NEGA-PRE" || temp == "ULBOUND" || temp == "LBOUND" || temp == "ULBOUND-NONGREEDY" || temp == "LBOUND-NONGREEDY" || temp == "CLOSURE-NONGREEDY" || temp == "GIVEN")
+						if (temp == "NONPRECAP" || temp == "POSITIVE-SURE-PRE" || temp == "POSITIVE-NEGA-PRE" || temp == "NEGATIVE-SURE-PRE" || temp == "NEGATIVE-NEGA-PRE" || temp == "ULBOUND" || temp == "LBOUND" || temp == "ULBOUND-NONGREEDY" || temp == "LBOUND-NONGREEDY" || temp == "CLOSURE-NONGREEDY" || temp == "GIVEN"
+							|| temp == "ONEORNOT" || temp == "REVERSEREF" || temp == "TRANMETA")
 						{
 							string temp2 = parsingStack[parsingStack.size() - 1].symbolinfo->Token.second;
 							for (string::size_type i = 0; i < temp2.size(); ++i)
 							{
-								string a(" ");
-								a[0] = temp2[i];
-								tempptr->symbolset.insert(a);
+								tempptr->symbolset.insert(temp2[i]);
 							}
 						}
 						else if (temp == "SPECMETA" || temp == "OTHERMETA" || temp == "UPPERALPHA" || temp == "LOWERALPHA" || temp == "DIGIT" || temp == "CLOSURE" || temp == "CAP" || temp == "OTHERCHAR")
 						{
-							tempptr->symbolset.insert(parsingStack[parsingStack.size() - 1].symbolinfo->Token.second);
+							tempptr->symbolset.insert(strToChar(parsingStack[parsingStack.size() - 1].symbolinfo->Token.second));
 						}
 						else if (temp == "SPECTRAN" || temp == "SPECTRANMETA")
 						{
 							if (parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\b" || parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\B" || parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\d" ||
 								parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\D" || parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\s" ||
 								parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\S" || parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\w" ||
-								parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "W")
+								parsingStack[parsingStack.size() - 1].symbolinfo->Token.second == "\\W")
 							{
 								cout << "ERROR:方括号内存在非法字符" << endl;
 								return false;
 							}
-							tempptr->symbolset.insert(parsingStack[parsingStack.size() - 1].symbolinfo->Token.second);
+							tempptr->symbolset.insert(strToChar(parsingStack[parsingStack.size() - 1].symbolinfo->Token.second));
 						}
 					}
 					else
 					{
-						string temp = parsingStack[parsingStack.size() - 1].symbolinfo->Token.first;
-						if (temp == "\\\\")
-						{
-							tempptr->symbolset.insert(temp);
-						}
-						else if (temp == "?" || temp == "|" || temp == ")")
-						{
-							tempptr->symbolset.insert(temp);
-						}
+						if (temp == "\\\\" || temp == "?" || temp == "|" || temp == ")")
+							tempptr->symbolset.insert(strToChar(temp));
 					}
 					parsingStack.pop_back();
-					if (productionNum == 56)
+					if (productionNum == 60)
 					{
 						parsingStack.pop_back();
 					}
@@ -2860,17 +3139,6 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	58:
-				{
-					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].symbolinfo->Token.first, parsingStack[parsingStack.size() - 1].symbolinfo->Token.second, grammarsymbolnode::unterminalsymbol::inSquare);
-					parsingStack.pop_back();
-					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["inSquare"]].LALRStateNumber, "inSquare", ""));
-					parsingStack.back().symbolinfo = tempptr;
-				}
-				break;
-				case	59:
-				case	60:
-				case	61:
 				case	62:
 				case	63:
 				case	64:
@@ -2879,49 +3147,29 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	67:
 				case	68:
 				case	69:
+				case	70:
+				case	71:
+				case	72:
+				case	73:
+				case    74:
+				case    75:
+				case    76:
 				{
-					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::inSquare);
+					shared_ptr<grammarsymbolnode> tempptr;
+					if (productionNum == 62)
+					{
+						tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].symbolinfo->Token.first, parsingStack[parsingStack.size() - 1].symbolinfo->Token.second, grammarsymbolnode::unterminalsymbol::inSquare);
+					}
+					else
+					{
+						tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::inSquare);
+					}
 					parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["inSquare"]].LALRStateNumber, "inSquare", ""));
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case 70:
-				{
-					shared_ptr<Graph<vertex, edge>> tempGraph(Copy(*(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph)));
-					size_t newadd1 = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start;
-					size_t newadd2 = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept;
-					parsingStack.pop_back(); parsingStack.pop_back(); parsingStack.pop_back();
-					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["G"]].LALRStateNumber, "G", ""));
-					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, newadd1, newadd2, grammarsymbolnode::G);
-				}
-				break;
-				case 71:
-				{
-					shared_ptr<Graph<vertex, edge>> tempGraph = make_shared<Graph<vertex, edge>>();
-					size_t newadd1 = tempGraph->addVertex(new vertex());
-					size_t newadd2 = tempGraph->addVertex(new vertex());
-					bool temp;
-					if (parsingStack[parsingStack.size() - 3].symbolinfo->caret == "")
-					{
-						temp = false;
-					}
-					else
-					{
-						temp = true;
-					}
-					edge *tempptr = new edge(temp);
-					for (set<string>::iterator p = parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.begin(); p != parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.end(); ++p)
-					{
-						tempptr->charset.second.insert(strToChar(*p));
-					}
-					tempGraph->addEdge(newadd1, newadd2, tempptr);
-					parsingStack.pop_back(); parsingStack.pop_back(); parsingStack.pop_back(); parsingStack.pop_back();
-					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["G"]].LALRStateNumber, "G", ""));
-					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, newadd1, newadd2, grammarsymbolnode::G);
-				}
-				break;
-				case 72:
+				case 77:
 				{
 					shared_ptr<Graph<vertex, edge>> tempG = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph;
 					tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->start_or_end_flag_in_bound = vertex::StartOrEndInBound::START_IN_BOUND;
@@ -3051,7 +3299,6 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 	case '%':
 	case '&':
 	case ',':
-	case '/':
 	case ';':
 	case '>':
 	case '@':
@@ -3089,7 +3336,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 	{
 		if (i == RE.size())
 		{
-			if (state == 2 && state == 3 && state == 4 && state == 5 && state == 6) 
+			if (state == 2 || state == 3 || state == 4 || state == 5 || state == 6 )    //注意
 			{
 				i = start + 1;
 				return { "OTHERMETA", "{" };
@@ -3098,14 +3345,17 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			{
 				return{ "OTHERCHAR", "\\" };
 			}
+			else if (state == 12)
+			{
+				return { "OTHERCHAR", "/" };
+			}
 		}
 
 		switch (state)
 		{
 		case 0:
-			if (!(RE[i] == '{' || RE[i] == '\\' || RE[i] == '*' || RE[i] == '+' || RE[i] == '?'))
+			if (!(RE[i] == '{' || RE[i] == '\\' || RE[i] == '*' || RE[i] == '+' || RE[i] == '?' || RE[i] == '/'))
 				return { "ERROR", "" };
-			updateState(state, pre_state, pre_pre_state);
 			if (RE[i] == '{')
 			{
 				state = 1;
@@ -3113,6 +3363,10 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			else if (RE[i] == '\\')
 			{
 				state = 11;
+			}
+			else if (RE[i] == '/')
+			{
+				state = 12;
 			}
 			else
 			{
@@ -3125,7 +3379,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			{
 				if (!(RE[i] == '0' || '1' <= RE[i] && RE[i] <= '9'))
 					return { "OTHERMETA", "{" };
-				updateState(state, pre_state, pre_pre_state);
+				pre_state = state;
 				if (RE[i] == '0')
 				{
 					state = 2;
@@ -3316,7 +3570,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			if (RE[i] == '*' || RE[i] == '+' || RE[i] == '?' || RE[i] == '^' || RE[i] == '$' || RE[i] == '.' || RE[i] == '(' || RE[i] == ')' || RE[i] == ':' || RE[i] == '=' || RE[i] == '!' || RE[i] == '<' || RE[i] == '|' || RE[i] == '[' || RE[i] == ']' || RE[i] == '-' || RE[i] == '{' || RE[i] == '}' || RE[i] == '\\'
 				|| RE[i] == 'b' || RE[i] == 'B' || RE[i] == 'd' || RE[i] == 'D' || RE[i] == 'f' || RE[i] == 'n' || RE[i] == 'r' || RE[i] == 's' || RE[i] == 'S' || RE[i] == 't' || RE[i] == 'v' || RE[i] == 'w' || RE[i] == 'W' || RE[i] == '0')
 			{
-				updateState(state, pre_state, pre_pre_state);
+				pre_state = state;
 				state = 8;
 				++i;
 			}
@@ -3330,6 +3584,76 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 				return{ "OTHERCHAR", "\\" };
 			}
 			break;
+		case 12:
+			if (RE[i] == 'x')
+			{
+				state = 14;
+				++i;
+			}
+			else if ('0' <= RE[i] && RE[i] <= '7')
+			{
+				state = 13;
+				++i;
+			}
+			else
+			{
+				return { "OTHERCHAR", "/"};
+			}
+		case 13:
+			if (pre_pre_state == 13)
+			{
+				int oct_value = 0;
+				for (string::size_type run = i - 3; run < i; ++run)
+				{
+					int t = RE[run] - '0';
+					oct_value = 8 * oct_value + t;
+
+				}
+				if (oct_value > 127)
+					return { "ERROR", "" };
+				return { "OCT_HEX_TRAN", string(1, static_cast<char>(oct_value)) };
+			}
+			else if (i == RE.size() || !('0' <= RE[i] && RE[i] <= '7'))
+			{
+				i = start + 1;
+				return { "OTHERCHAR", "/" };
+			}
+			else
+			{
+				updateState(state, pre_state, pre_pre_state);
+				++i;
+			}
+		case 14:
+			if (pre_pre_state == 14)
+			{
+				int hex_value = 0;
+				for (string::size_type run = i - 2; run < i; ++run)
+				{
+					int t;
+					if ('0' <= RE[run] && RE[run] <= '9')
+						t = RE[run] - '0';
+					else if ('a' <= RE[run] && RE[run] <= 'f')
+						t = RE[run] - 'a';
+					else
+						t = RE[run] - 'A';
+					hex_value = 16 * hex_value + t;
+
+				}
+				if (hex_value > 127)
+					return { "ERROR", "" };
+				return { "OCT_HEX_TRAN", string(1, static_cast<char>(hex_value)) };
+			}
+			else if (i == RE.size() || !('0' <= RE[i] && RE[i] <= '9' || 'a' <= RE[i] && RE[i] <= 'f' || 'A' <= RE[i] && RE[i] <= 'F'))
+			{
+			    i = start + 1;
+				return { "OTHERCHAR", "/" };
+
+			}
+			else
+			{
+				updateState(state, pre_state, pre_pre_state);
+				++i;
+			}
 		}
 	}
 }
