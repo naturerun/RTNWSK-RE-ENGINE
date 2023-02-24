@@ -1090,32 +1090,19 @@ shared_ptr<map<string, set<string>>> LALRAutomata::calculateFirst()
 			{
 				if (compute_difference_set_result.empty() != true)
 				{
-					map<string, map<long, tuple<vector<NonTerminalSymbolInfo>, string, vector<NonTerminalSymbolInfo>::size_type, bool, set<string>>>>::iterator m = temp.begin();
-					for (; m != p; ++m)
+					for (map<string, map<long, tuple<vector<NonTerminalSymbolInfo>, string, vector<NonTerminalSymbolInfo>::size_type, bool, set<string>>>>::iterator m = temp.begin() ; m != temp.end(); ++m)
 					{
-						for (map<long, tuple<vector<NonTerminalSymbolInfo>, string, vector<NonTerminalSymbolInfo>::size_type, bool, set<string>>>::iterator v = m->second.begin(); v != m->second.end(); ++v)
+						if (m != p)
 						{
-							for (vector<NonTerminalSymbolInfo>::iterator k = get<0>(v->second).begin(); k != get<0>(v->second).end(); ++k)
+							for (map<long, tuple<vector<NonTerminalSymbolInfo>, string, vector<NonTerminalSymbolInfo>::size_type, bool, set<string>>>::iterator v = m->second.begin(); v != m->second.end(); ++v)
 							{
-								if (k->symbol == p->first)
+								for (vector<NonTerminalSymbolInfo>::iterator k = get<0>(v->second).begin(); k != get<0>(v->second).end(); ++k)
 								{
-									k->new_add_first.insert(compute_difference_set_result.begin(), compute_difference_set_result.end());   //
-									break;
-								}
-							}
-						}
-					}
-
-					for (++m; m != temp.end(); ++m)
-					{
-						for (map<long, tuple<vector<NonTerminalSymbolInfo>, string, vector<NonTerminalSymbolInfo>::size_type, bool, set<string>>>::iterator v = m->second.begin(); v != m->second.end(); ++v)
-						{
-							for (vector<NonTerminalSymbolInfo>::iterator k = get<0>(v->second).begin(); k != get<0>(v->second).end(); ++k)
-							{
-								if (k->symbol == p->first)
-								{
-									k->new_add_first.insert(compute_difference_set_result.begin(), compute_difference_set_result.end());   //
-									break;
+									if (k->symbol == p->first)
+									{
+										k->new_add_first.insert(compute_difference_set_result.begin(), compute_difference_set_result.end());   //
+										break;
+									}
 								}
 							}
 						}
