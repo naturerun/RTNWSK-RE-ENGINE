@@ -16,7 +16,7 @@ public:  //构造函数
 			pair<int, int> numberrange;   //数字范围
 			pair<string, pair<char, char>> charrange;   //字符范围
 			pair<bool, set<char>> charset;  //fasle 没有尖号，true有尖号
-			int reverref;  //反向引用
+			string reverref;  //反向引用
 			string tran;  //转义字符
 			string other;
 			char line_start_and_end;   //行结束和开始
@@ -44,12 +44,13 @@ public:  //构造函数
 			case CHARSET: charset.~pair<bool, set<char>>(); break;
 			case TRAN: tran.~string(); break;
 			case OTHER: other.~string(); break;
+			case REVERREF: reverref.~string(); break;
 			}
 		}
 		edge(int first, int right) :flag(NUMRANGE), numberrange(first, right) {}
 		edge(const string &c, char first, char right) :flag(CHARRANGE), charrange(c, pair<char, char>(first, right)) {}
 		edge(bool exclude) :flag(CHARSET), charset(exclude, set<char>()) {}
-		edge(int r) :flag(REVERREF), reverref(r) {}
+		edge(const string &r) :flag(REVERREF), reverref(r) {}
 		edge(const string &t, type f) :flag(f)
 		{
 			if (f == TRAN)
@@ -75,8 +76,8 @@ public:  //构造函数
 		shared_ptr<long> start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = nullptr;
 		shared_ptr<size_t> nogreedy_end_sub_start_in_closure = nullptr;
 		set<size_t> size;  //非贪婪终态编号-开始态编号定义的尺寸
-		map<type, set<int>> attrSet;  //子表达式开始或结束对应的子表达式组号集合
-		map<int, Graph<vertex, edge>::GraphVertexNode *> subExpStartPtr;   //当前状态的子表达式组号和对应的子表达式开始状态的指针的映射关系
+		map<type, set<string>> attrSet;  //子表达式开始或结束对应的子表达式组号集合
+		map<string, Graph<vertex, edge>::GraphVertexNode *> subExpStartPtr;   //当前状态的子表达式组号和对应的子表达式开始状态的指针的映射关系
 		vertex(const vertex &be_copyied):non_greedy_start_end_flag(be_copyied.non_greedy_start_end_flag), start_or_end_flag_in_closure(be_copyied.start_or_end_flag_in_closure), start_or_end_flag_in_bound(be_copyied.start_or_end_flag_in_bound),
 			size(be_copyied.size), attrSet(be_copyied.attrSet), subExpStartPtr(be_copyied.subExpStartPtr)
 		{
@@ -114,8 +115,7 @@ public:  //构造函数
 	{
 		string result;   //匹配的字符串
 		streampos match_pos;   //匹配位置
-		size_t length;  //匹配的字符串长度
-		matchResult(string r, streampos m, size_t l) :result(r), match_pos(m), length(l) {}
+		matchResult(string r, streampos m) :result(r), match_pos(m){}
 	};
 
 	struct common_match
@@ -160,43 +160,47 @@ public:  //构造函数
 		}
 	}
 private:
-	pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, set<vector<RELALRParsing::stackNode>::size_type>>>>> MatchCurrentCharacter(bool TF, map<size_t, set<size_t>> &insertIntoSetFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFristSecond, ifstream &input, const Graph<vertex, edge> &NFA, set<size_t> &initial_set, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, const map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch); //匹配当前读入的字符并在该字符上进行状态转移
+	pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, set<vector<RELALRParsing::stackNode>::size_type>>>>> MatchCurrentCharacter(bool TF, map<size_t, set<size_t>> &insertIntoSetFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFristSecond, ifstream &input, const Graph<vertex, edge> &NFA, set<size_t> &initial_set, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, const map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch); //匹配当前读入的字符并在该字符上进行状态转移
 	static void processReverrefMatch(ifstream &input, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &tranSubexpStartTemp, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result);   //处理反向引用的匹配
 	static void insertTranItemTomap(map<size_t, set<vector<stackNode>::size_type>> &tranItem, size_t goalstate, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &tranSubexpStartTemp);   //将给定传播项并入tranSubexpStartTemp
 	static void addTranItemForReverref(size_t goalstate, map<size_t, set<vector<stackNode>::size_type>> &subExpStartAndStackIndex, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &tranSubexpStartTemp);  //反向引用匹配成功时将反向引用开始匹配时的传播项并入tranSubexpStartTemp
-	static void clearDeadStateStackIndex(const Graph<vertex, edge> &NFA, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, map<size_t, map<vector<stackNode>::size_type, map<int, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart);    //杀死不再传播的传播项
+	static void clearDeadStateStackIndex(const Graph<vertex, edge> &NFA, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart);    //杀死不再传播的传播项
 	static void unionList(map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &to, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &from);  //合并to以及from
 	static void calTran(shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, map<size_t, set<size_t>> &tran);  //在有边相连的顶点间传播传播项
 	static void addNewTranItemIntoTemp(shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, const size_t &start_state, const size_t &goal_state);   //将start_state对应的传播项传播至goal_state,然后将传播至goal_state的传播项并入tranSubexpStartTemp
 	static void CalClosure(const Graph<vertex, edge> &NFA, set<size_t> &initial_set, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp);  //计算initial_set的闭包并将tranSubexpStartTemp内的传播项传播至闭包内每一项
-	static void ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, const Graph<vertex, edge> &NFA, const vector<stackNode> &stateStack, map<size_t, map<vector<stackNode>::size_type, map<int, bool>>> &start, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end, map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &stateRelateSubExpStart, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, bool isLastProcessPerCycle,
+	static void ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, const Graph<vertex, edge> &NFA, const vector<stackNode> &stateStack, map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end, map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &stateRelateSubExpStart, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, bool isLastProcessPerCycle,
 		map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &start_in_bound_related_to_nogreedy_start,
 		map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &closure_nogreedy_start_related_to_nogreedy_start,
 		map<size_t, map<vector<stackNode>::size_type, size_t>> &closure_nogreedy_match_count);  //处理子表达式
 	static void selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, size_t acceptstate,
 		map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end,
 		map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, vector<stackNode> &stateStack, Graph<vertex, edge> &NFA);
-	void CalNewState(map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end,
-		map<size_t, map<vector<stackNode>::size_type, map<int, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, ifstream &input, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart,
-		shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, Graph<vertex, edge> &NFA, vector<stackNode> &stateStack, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result,
-		map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch, size_t acceptstate,
-		map<size_t, map<vector<stackNode>::size_type, size_t>> &closure_nogreedy_match_count, map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &closure_nogreedy_start_related_to_nogreedy_start,
-		map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &start_in_bound_related_to_nogreedy_start); //匹配当前字符,计算从当前字符转换至的新状态集
-	shared_ptr<vector<matchResult>> match(ifstream &input, shared_ptr<Graph<vertex, edge>> &NFA, size_t startstate, size_t acceptstate, bool TF, match_type matchtype, map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch); //对文件中内容执行匹配,TF=true返回所有匹配结果false只返回第一个匹配结果
-	pair<string, string> LEXER(string RE, string::size_type &i);  //正则表达式词法分析器
+	void CalNewState(map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>& non_greedy_match_result_for_every_end, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>& non_greedy_tran, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>>& end,
+		map<size_t, map<vector<stackNode>::size_type, map<string, bool>>>& start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>>& returnToSubExpStart, ifstream& input, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>& stateRelateSubExpStart,
+		shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>& tranSubexpStartTemp, Graph<vertex, edge>& NFA, vector<stackNode>& stateStack, stackNode& newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>>& reverref_match_result,
+		map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>>& subExpMatch, const char ch, size_t acceptstate,
+		map<size_t, map<vector<stackNode>::size_type, size_t>>& closure_nogreedy_match_count, map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>>& closure_nogreedy_start_related_to_nogreedy_start,
+		map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>>& start_in_bound_related_to_nogreedy_start); //匹配当前字符,计算从当前字符转换至的新状态集
+	shared_ptr<vector<matchResult>> match(ifstream& input, shared_ptr<Graph<vertex, edge>>& NFA, size_t startstate, size_t acceptstate, bool TF, match_type matchtype);  
+	pair<string, string> LEXER(string RE, string::size_type& i);//正则表达式词法分析器
 	bool REParsing(string RE);  //解析正则表达式
 	static Graph<vertex, edge> *Copy(Graph<vertex, edge> &BeCopyed);   //包装了Graph成员函数Copy，在拷贝有向图的同时保持子表达式结束对子表达式开始的指针指向
 	static Graph<vertex, edge> *merge(Graph<vertex, edge> &targetObject, Graph<vertex, edge> &Bemerged, bool CopyOrNot);  //包装了Graph成员函数merge，在合并有向图的同时保持子表达式结束对子表达式开始的指针指向
 	static void ReversalGraph(Graph<vertex, edge> &BereversedGraph);  //包装了Graph成员函数ReversalGraph，在反转有向边的同时调整子表达式开始结束之间的指针指向和转移subExpStartPtr
-	bool np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_nomatch_Graph, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_start, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_accept, map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch);  //执行反向预查中不实际参与匹配的模式的匹配
-	bool sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_nomatch_Graph, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_start, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_accept, map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch);  //执行正向预查中不实际参与匹配的模式的匹配
+	bool np_nomatch_match(ifstream& input, Graph<vertex, edge>& pre_nomatch_Graph, vector<Graph<vertex, edge>::GraphVertexNode*>::size_type pre_nomatch_start, vector<Graph<vertex, edge>::GraphVertexNode*>::size_type pre_nomatch_accept);  //执行反向预查中不实际参与匹配的模式的匹配
+	bool sp_nomatch_match(ifstream& input, Graph<vertex, edge>& pre_nomatch_Graph, vector<Graph<vertex, edge>::GraphVertexNode*>::size_type pre_nomatch_start, vector<Graph<vertex, edge>::GraphVertexNode*>::size_type pre_nomatch_accept);  //执行正向预查中不实际参与匹配的模式的匹配
+	bool store_match(shared_ptr<vector<matchResult>>& finalresult, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>& non_greedy_match_result_for_every_end,
+		vector<stackNode>& stateStack, streampos startPosition, ifstream& input,
+		bool TF, bool finish_store, size_t acceptstate, match_type matchtype, vector<string>& partial_matcn_str, size_t& max_covered_index, size_t& last_contain_accept_state, long long trace);
+	void computeCurrentMatchStr(vector<string>& partial_matcn_str, size_t last_contain_accept_state, vector<stackNode>& stateStack);
 	union
 	{
 		common_match commonmatch;
 		pre_match prematch;
 	};
 	LALRAutomata LALRParsing;
-	map<int, shared_ptr<Graph<vertex, edge>>> subExp;  //子表达式编号及对应的NFA
+	map<string, shared_ptr<Graph<vertex, edge>>> subExp;  //子表达式编号及对应的NFA
 	match_type typeflag;  //执行的匹配类型，是正反向预查还是普通匹配
 };
 
@@ -205,20 +209,20 @@ void RELALRParsing::ReversalGraph(Graph<vertex, edge> &BereversedGraph)
 	BereversedGraph.ReversalGraph();
 	for (size_t i = 0; i < BereversedGraph.getVertexNum(); ++i)
 	{
-		map<vertex::type, set<int>>::iterator p;
+		map<vertex::type, set<string>>::iterator p;
 		if ((p = BereversedGraph.SetOfVertex[i]->Vertexdatafield->attrSet.find(vertex::SUBEXPRS)) != BereversedGraph.SetOfVertex[i]->Vertexdatafield->attrSet.end())
 		{
-			set<int> temp(p->second);
+			set<string> temp(p->second);
 			BereversedGraph.SetOfVertex[i]->Vertexdatafield->attrSet.erase(p);
 			BereversedGraph.SetOfVertex[i]->Vertexdatafield->attrSet.insert(make_pair(vertex::SUBEXPRE, temp));
 		}
 
 		if ((p = BereversedGraph.SetOfVertex[i]->Vertexdatafield->attrSet.find(vertex::SUBEXPRE)) != BereversedGraph.SetOfVertex[i]->Vertexdatafield->attrSet.end())
 		{
-			set<int> temp(p->second);
+			set<string> temp(p->second);
 			BereversedGraph.SetOfVertex[i]->Vertexdatafield->attrSet.erase(p);
 			BereversedGraph.SetOfVertex[i]->Vertexdatafield->attrSet.insert(make_pair(vertex::SUBEXPRS, temp));
-			for (map<int, Graph<vertex, edge>::GraphVertexNode *>::iterator q = BereversedGraph.SetOfVertex[i]->Vertexdatafield->subExpStartPtr.begin(); q != BereversedGraph.SetOfVertex[i]->Vertexdatafield->subExpStartPtr.end(); )
+			for (map<string, Graph<vertex, edge>::GraphVertexNode *>::iterator q = BereversedGraph.SetOfVertex[i]->Vertexdatafield->subExpStartPtr.begin(); q != BereversedGraph.SetOfVertex[i]->Vertexdatafield->subExpStartPtr.end(); )
 			{
 				q->second->Vertexdatafield->subExpStartPtr.insert(make_pair(q->first, BereversedGraph.SetOfVertex[i]));
 				q = BereversedGraph.SetOfVertex[i]->Vertexdatafield->subExpStartPtr.erase(q);
@@ -232,13 +236,12 @@ shared_ptr<map<unsigned long, vector<RELALRParsing::matchResult>>> RELALRParsing
 	shared_ptr<vector<matchResult>> result = nullptr;
 	if (typeflag == match_type::COMMON)
 	{
-		map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> subExpMatch;
-		result = match(input, commonmatch.NFA, commonmatch.start, commonmatch.accept, true, match_type::COMMON, subExpMatch);
+		
+		result = match(input, commonmatch.NFA, commonmatch.start, commonmatch.accept, true, match_type::COMMON);
 	}
 	else
 	{
-		map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> subExpMatch;
-		result = match(input, prematch.preGraph, prematch.pre_start, prematch.pre_accept, true, typeflag, subExpMatch);
+		result = match(input, prematch.preGraph, prematch.pre_start, prematch.pre_accept, true, typeflag);
 	}
 
 	if (result->empty())
@@ -261,7 +264,7 @@ shared_ptr<map<unsigned long, vector<RELALRParsing::matchResult>>> RELALRParsing
 			output << "第" << 1 << "个匹配结果:" << endl;
 			output << "行数:" << 1 << endl;
 			output << "行中位置:从左至右数第" << 1 << "个字符" << endl;
-			output << "匹配的字符串:" << (*result)[0].result << " 长度:" << (*result)[0].length << endl;
+			output << "匹配的字符串:" << (*result)[0].result << " 长度:" << (*result)[0].result.size() << endl;
 			output << endl;
 			result_with_linenum->insert(make_pair(1, vector<matchResult>(1, matchResult((*result)[0]))));
 			++i;
@@ -282,7 +285,7 @@ shared_ptr<map<unsigned long, vector<RELALRParsing::matchResult>>> RELALRParsing
 				output << "第" << i + 1 << "个匹配结果:" << endl;
 				output << "行数:" << lineNum << endl;
 				output << "行中位置:从左至右数第" << input.tellg() - line_start + 1 << "个字符" << endl;
-				output << "匹配的字符串:" << (*result)[i].result << " 长度:" << (*result)[i].length << endl;
+				output << "匹配的字符串:" << (*result)[i].result << " 长度:" << (*result)[i].result.size() << endl;
 				output << endl;
 
 				auto p = result_with_linenum->insert(make_pair(lineNum, vector<matchResult>(1, matchResult((*result)[i]))));
@@ -307,7 +310,7 @@ Graph<RELALRParsing::vertex, RELALRParsing::edge> *RELALRParsing::Copy(Graph<ver
 	{
 		if (tempptr->SetOfVertex[i]->Vertexdatafield->attrSet.find(tempptr->SetOfVertex[i]->Vertexdatafield->SUBEXPRE) != tempptr->SetOfVertex[i]->Vertexdatafield->attrSet.end())
 		{
-			for (map<int, Graph<vertex, edge>::GraphVertexNode *>::iterator p = tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.begin(); p != tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.end(); ++p)
+			for (map<string, Graph<vertex, edge>::GraphVertexNode *>::iterator p = tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.begin(); p != tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.end(); ++p)
 			{
 				p->second = tempptr->SetOfVertex[p->second->number];
 			}
@@ -325,7 +328,7 @@ Graph<RELALRParsing::vertex, RELALRParsing::edge> *RELALRParsing::merge(Graph<ve
 		{
 			if (tempptr->SetOfVertex[i]->Vertexdatafield->attrSet.find(tempptr->SetOfVertex[i]->Vertexdatafield->SUBEXPRE) != tempptr->SetOfVertex[i]->Vertexdatafield->attrSet.end())
 			{
-				for (map<int, Graph<vertex, edge>::GraphVertexNode *>::iterator p = tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.begin(); p != tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.end(); ++p)
+				for (map<string, Graph<vertex, edge>::GraphVertexNode *>::iterator p = tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.begin(); p != tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.end(); ++p)
 				{
 					p->second = tempptr->SetOfVertex[p->second->number];
 				}
@@ -336,7 +339,7 @@ Graph<RELALRParsing::vertex, RELALRParsing::edge> *RELALRParsing::merge(Graph<ve
 		{
 			if (tempptr->SetOfVertex[i]->Vertexdatafield->attrSet.find(tempptr->SetOfVertex[i]->Vertexdatafield->SUBEXPRE) != tempptr->SetOfVertex[i]->Vertexdatafield->attrSet.end())
 			{
-				for (map<int, Graph<vertex, edge>::GraphVertexNode *>::iterator p = tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.begin(); p != tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.end(); ++p)
+				for (map<string, Graph<vertex, edge>::GraphVertexNode *>::iterator p = tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.begin(); p != tempptr->SetOfVertex[i]->Vertexdatafield->subExpStartPtr.end(); ++p)
 				{
 					p->second = tempptr->SetOfVertex[p->second->number + targetObject.getVertexNum()];
 				}
@@ -352,7 +355,7 @@ Graph<RELALRParsing::vertex, RELALRParsing::edge> *RELALRParsing::merge(Graph<ve
 		{
 			if (targetObject.SetOfVertex[i]->Vertexdatafield->attrSet.find(targetObject.SetOfVertex[i]->Vertexdatafield->SUBEXPRE) != targetObject.SetOfVertex[i]->Vertexdatafield->attrSet.end())
 			{
-				for (map<int, Graph<vertex, edge>::GraphVertexNode *>::iterator p = targetObject.SetOfVertex[i]->Vertexdatafield->subExpStartPtr.begin(); p != targetObject.SetOfVertex[i]->Vertexdatafield->subExpStartPtr.end(); ++p)
+				for (map<string, Graph<vertex, edge>::GraphVertexNode *>::iterator p = targetObject.SetOfVertex[i]->Vertexdatafield->subExpStartPtr.begin(); p != targetObject.SetOfVertex[i]->Vertexdatafield->subExpStartPtr.end(); ++p)
 				{
 					p->second = targetObject.SetOfVertex[p->second->number + GraphSize];
 				}
@@ -518,7 +521,7 @@ void RELALRParsing::calTran(shared_ptr<map<size_t, map<size_t, set<vector<stackN
 			break;
 	}
 }
-void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, const Graph<vertex, edge> &NFA, const vector<stackNode> &stateStack, map<size_t, map<vector<stackNode>::size_type, map<int, bool>>> &start, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end, map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &stateRelateSubExpStart, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, bool isLastProcessPerCycle,
+void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, const Graph<vertex, edge> &NFA, const vector<stackNode> &stateStack, map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end, map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &stateRelateSubExpStart, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, bool isLastProcessPerCycle,
 	map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &start_in_bound_related_to_nogreedy_start,
 	map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &closure_nogreedy_start_related_to_nogreedy_start,
 	map<size_t, map<vector<stackNode>::size_type, size_t>> &closure_nogreedy_match_count)
@@ -584,7 +587,7 @@ void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t
 	set<size_t> initial;
 	for (set<size_t>::iterator state = stateSet.begin(); state != stateSet.end(); ++state)
 	{
-		for (map<vertex::type, set<int>>::iterator goThrough = NFA.SetOfVertex[*state]->Vertexdatafield->attrSet.begin(); goThrough != NFA.SetOfVertex[*state]->Vertexdatafield->attrSet.end(); ++goThrough)
+		for (map<vertex::type, set<string>>::iterator goThrough = NFA.SetOfVertex[*state]->Vertexdatafield->attrSet.begin(); goThrough != NFA.SetOfVertex[*state]->Vertexdatafield->attrSet.end(); ++goThrough)
 		{
 			if (isLastProcessPerCycle ? false : goThrough->first == vertex::type::SUBEXPRS)   //加入对应于子表达式开始状态的新的传播项
 			{
@@ -593,10 +596,10 @@ void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t
 				initial.insert(*state);
 
 				{
-					pair<map<vector<stackNode>::size_type, map<int, bool>>::iterator, bool> tempit = start.insert(make_pair(*state, map<vector<stackNode>::size_type, map<int, bool>>())).first->second.insert(make_pair(stateStack.size() - 1, map<int, bool>()));
+					pair<map<vector<stackNode>::size_type, map<string, bool>>::iterator, bool> tempit = start.insert(make_pair(*state, map<vector<stackNode>::size_type, map<string, bool>>())).first->second.insert(make_pair(stateStack.size() - 1, map<string, bool>()));
 					if (tempit.second)
 					{
-						for (set<int>::iterator m = NFA.SetOfVertex[*state]->Vertexdatafield->attrSet[vertex::type::SUBEXPRS].begin(); m != NFA.SetOfVertex[*state]->Vertexdatafield->attrSet[vertex::type::SUBEXPRS].end(); ++m)
+						for (set<string>::iterator m = NFA.SetOfVertex[*state]->Vertexdatafield->attrSet[vertex::type::SUBEXPRS].begin(); m != NFA.SetOfVertex[*state]->Vertexdatafield->attrSet[vertex::type::SUBEXPRS].end(); ++m)
 						{
 							tempit.first->second.insert(make_pair(*m, true));
 						}
@@ -610,7 +613,7 @@ void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t
 					string temp;
 					map<size_t, set<vector<stackNode>::size_type>> &tempref = stateRelateSubExpStart[*state];
 
-					for (map<int, Graph<vertex, edge>::GraphVertexNode *>::iterator p = NFA.SetOfVertex[*state]->Vertexdatafield->subExpStartPtr.begin(); p != NFA.SetOfVertex[*state]->Vertexdatafield->subExpStartPtr.end(); ++p)
+					for (map<string, Graph<vertex, edge>::GraphVertexNode *>::iterator p = NFA.SetOfVertex[*state]->Vertexdatafield->subExpStartPtr.begin(); p != NFA.SetOfVertex[*state]->Vertexdatafield->subExpStartPtr.end(); ++p)
 					{
 						if (tempref.find(p->second->number) != tempref.end())
 						{
@@ -957,7 +960,7 @@ void RELALRParsing::addNewTranItemIntoTemp(shared_ptr<map<size_t, map<size_t, se
 	}
 }
 //true匹配单词非单词边界行结束和行开始，false不匹配
-pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, set<vector<RELALRParsing::stackNode>::size_type>>>>> RELALRParsing::MatchCurrentCharacter(bool TF, map<size_t, set<size_t>> &insertIntoSetFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFristSecond, ifstream &input, const Graph<vertex, edge> &NFA, set<size_t> &initial_set, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, const map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch)
+pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, set<vector<RELALRParsing::stackNode>::size_type>>>>> RELALRParsing::MatchCurrentCharacter(bool TF, map<size_t, set<size_t>> &insertIntoSetFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFristSecond, ifstream &input, const Graph<vertex, edge> &NFA, set<size_t> &initial_set, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, const map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch)
 {
 	shared_ptr<map<size_t, set<size_t>>> tran_on_wordboundornobound = nullptr;
 	shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> wordboundornobound_tran_result = nullptr;
@@ -983,7 +986,7 @@ pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, se
 						cout << "RUNTIME ERROR:反向引用\\" << tempptr->Edgedatafield->reverref << "对应的子表达式不存在" << endl;
 						exit(-1);
 					}
-					map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>>::const_iterator tempit;
+					map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>>::const_iterator tempit;
 					if ((tempit = subExpMatch.find(tempptr->Edgedatafield->reverref)) == subExpMatch.end())
 					{
 						cout << "RUNTIME ERROR:反向引用\\" << tempptr->Edgedatafield->reverref << "对应的子表达式尚未被捕获" << endl;
@@ -1234,9 +1237,9 @@ pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, se
 	return { tran_on_wordboundornobound, wordboundornobound_tran_result };  //first为通过单词费单词边界以及行开始结束位置转移至的新状态和转移至新状态的状态集合的映射关系,second为传播至新状态的传播项集合
 }
 void RELALRParsing::CalNewState(map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end, 
-	map<size_t, map<vector<stackNode>::size_type, map<int, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, ifstream &input, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, 
+	map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, ifstream &input, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, 
 	shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, Graph<vertex, edge> &NFA, vector<stackNode> &stateStack, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, 
-	map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch, size_t acceptstate,
+	map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch, size_t acceptstate,
 	map<size_t, map<vector<stackNode>::size_type, size_t>> &closure_nogreedy_match_count, map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &closure_nogreedy_start_related_to_nogreedy_start,
 	map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &start_in_bound_related_to_nogreedy_start)
 {
@@ -1271,7 +1274,7 @@ void RELALRParsing::CalNewState(map<vector<stackNode>::size_type, map<size_t, ma
 	unionList(*tranSubexpStartTemp, *after_wordboundornobound_tran_result);
 }
 
-bool RELALRParsing::np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_nomatch_Graph, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_start, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_accept, map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch)
+bool RELALRParsing::np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_nomatch_Graph, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_start, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_accept)
 {    //文件指针向前移动,在反转的有向图上反向匹配
 	streampos filebeg;
 	{
@@ -1291,7 +1294,7 @@ bool RELALRParsing::np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 	vector<stackNode> stateStack;
 	stateStack.push_back(stackNode());
 	stateStack.back().stateSet.insert(pre_nomatch_start);
-	map<size_t, map<vector<stackNode>::size_type, map<int, bool>>> start; //(子表达式开始状态编号,(抵达子表达式开始态时的栈节点下标,(子表达式开始态对应的子表达式组号, 是否首次处理开始态+栈节点下标[true首次否则相反])))
+	map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> start; //(子表达式开始状态编号,(抵达子表达式开始态时的栈节点下标,(子表达式开始态对应的子表达式组号, 是否首次处理开始态+栈节点下标[true首次否则相反])))
 	map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> end;    //(NFA结束状态编号, NFA结束状态对应栈节点下标)
 	shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> stateRelateSubExpStart = make_shared<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>();  //(栈节点中的状态号,(子表达式开始状态号，子表达式开始对应栈节点下标集))
 	map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> returnToSubExpStart; //(子表达式开始态号,(相同的子表达式开始态号,子表达式开始态对应栈节点下标)) 匹配路径从给定子表达式开始态及对应栈节点重新回到给定子表达式开始态及对应栈节点时stateRelateSubExpStart会出现的元组
@@ -1307,6 +1310,7 @@ bool RELALRParsing::np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 	//闭包非贪婪起始态号,对应栈节点下标,对应非贪婪起始态,非贪婪起始态对应栈节点下标
 	map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> start_in_bound_related_to_nogreedy_start;
 	//start_in_bound状态编号,对应栈节点下标,对应nogreedy起始态下标,nogreedy起始态对应栈节点编号
+	map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> subExpMatch;
 
 	while (true)
 	{
@@ -1358,7 +1362,7 @@ bool RELALRParsing::np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 	}
 }
 
-bool RELALRParsing::sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_nomatch_Graph, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_start, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_accept, map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch)
+bool RELALRParsing::sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_nomatch_Graph, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_start, vector<Graph<vertex, edge>::GraphVertexNode *>::size_type pre_nomatch_accept)
 {
 	//文件指针向后移动，在代表不实际匹配的模式上匹配
 	char ch;
@@ -1366,7 +1370,7 @@ bool RELALRParsing::sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 	vector<stackNode> stateStack;
 	stateStack.push_back(stackNode());
 	stateStack.back().stateSet.insert(pre_nomatch_start);
-	map<size_t, map<vector<stackNode>::size_type, map<int, bool>>> start; //(子表达式开始状态编号,(抵达子表达式开始态时的栈节点下标,(子表达式开始态对应的子表达式组号, 是否首次处理开始态+栈节点下标[true首次否则相反])))
+	map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> start; //(子表达式开始状态编号,(抵达子表达式开始态时的栈节点下标,(子表达式开始态对应的子表达式组号, 是否首次处理开始态+栈节点下标[true首次否则相反])))
 	map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> end;    //(NFA结束状态编号, NFA结束状态对应栈节点下标)
 	shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> stateRelateSubExpStart = make_shared<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>();  //(栈节点中的状态号,(子表达式开始状态号，子表达式开始对应栈节点下标集))
 	map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> returnToSubExpStart; //(子表达式开始态号,(相同的子表达式开始态号,子表达式开始态对应栈节点下标)) 匹配路径从给定子表达式开始态及对应栈节点重新回到给定子表达式开始态及对应栈节点时stateRelateSubExpStart会出现的元组
@@ -1382,7 +1386,7 @@ bool RELALRParsing::sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 	//闭包非贪婪起始态号,对应栈节点下标,对应非贪婪起始态,非贪婪起始态对应栈节点下标
 	map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> start_in_bound_related_to_nogreedy_start;
 	//start_in_bound状态编号,对应栈节点下标,对应nogreedy起始态下标,nogreedy起始态对应栈节点编号
-
+	map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> subExpMatch;
 	while (input >> ch)
 	{
 		CalClosure(pre_nomatch_Graph, stateStack.back().stateSet, tranSubexpStartTemp);
@@ -1430,7 +1434,7 @@ bool RELALRParsing::sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 	return false;
 }
 
-void RELALRParsing::clearDeadStateStackIndex(const Graph<vertex, edge> &NFA, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, map<size_t, map<vector<stackNode>::size_type, map<int, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart)
+void RELALRParsing::clearDeadStateStackIndex(const Graph<vertex, edge> &NFA, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart)
 {   //对比stateRelateSubExpStart和tranSubexpStartTemp找出消失的传播项,在returnToSubExpStart和start中杀死这些传播项
 	map<size_t, set<vector<stackNode>::size_type>> subStartAndStackIndex_original;
 	map<size_t, set<vector<stackNode>::size_type>> subStartAndStackIndex_now;
@@ -1462,7 +1466,7 @@ void RELALRParsing::clearDeadStateStackIndex(const Graph<vertex, edge> &NFA, sha
 
 			if (NFA.SetOfVertex[z->first]->Vertexdatafield->attrSet.empty() == false)
 			{
-				map<vector<stackNode>::size_type, map<int, bool>> &start1 = start[z->first];
+				map<vector<stackNode>::size_type, map<string, bool>> &start1 = start[z->first];
 				for (set<vector<stackNode>::size_type>::iterator p = z->second.begin(); p != z->second.end(); ++p)
 				{
 					start1.erase(*p);
@@ -1499,7 +1503,7 @@ void RELALRParsing::clearDeadStateStackIndex(const Graph<vertex, edge> &NFA, sha
 
 		if (NFA.SetOfVertex[z->first]->Vertexdatafield->attrSet.empty() == false)
 		{
-			map<vector<stackNode>::size_type, map<int, bool>> &start1 = start[z->first];
+			map<vector<stackNode>::size_type, map<string, bool>> &start1 = start[z->first];
 			for (set<vector<stackNode>::size_type>::iterator p = z->second.begin(); p != z->second.end(); ++p)
 			{
 				start1.erase(*p);
@@ -1640,18 +1644,217 @@ void RELALRParsing::selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Re
 	}
 }
 
-shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &input, shared_ptr<Graph<vertex, edge>> &NFA, size_t startstate, size_t acceptstate, bool TF, match_type matchtype, map<int, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch)//(反向引用编号,((子表达式开始态编号,子表达式结束态编号),(抵达子表达式开始态时对应栈节点编号,前述四项共同决定的匹配结果)))
+void RELALRParsing::computeCurrentMatchStr(vector<string>& partial_matcn_str, size_t last_contain_accept_state, vector<stackNode>& stateStack)
+{
+	partial_matcn_str.push_back(partial_matcn_str.back());
+	for (size_t j = last_contain_accept_state; j < stateStack.size() - 1; ++j)
+	{
+		string temp2(" ");
+		temp2[0] = stateStack[j].matchedChar;
+		partial_matcn_str.back() = partial_matcn_str.back() + temp2;
+	}
+}
+
+bool RELALRParsing::store_match(shared_ptr<vector<matchResult>> &finalresult, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end, 
+	vector<stackNode> &stateStack, streampos startPosition, ifstream& input,
+	bool TF, bool finish_store, size_t acceptstate, match_type matchtype, vector<string> &partial_matcn_str, size_t &max_covered_index, size_t &last_contain_accept_state, long long trace)
+{
+	map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>::iterator p = non_greedy_match_result_for_every_end.begin();
+	map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>::iterator q = p;
+	if (q != non_greedy_match_result_for_every_end.end())
+		++q;
+	while (q != non_greedy_match_result_for_every_end.end())
+	{
+		size_t size_p = 0;
+		size_t size_q = 0;
+		map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>::iterator p2 = p->second.begin();
+		map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>::iterator q2 = q->second.begin();
+		while (p2 != p->second.end() && q2 != q->second.end())
+		{
+			if (p2->first == q2->first)
+			{
+				map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>::iterator p3 = p2->second.begin();
+				map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>::iterator q3 = q2->second.begin();
+				while (p3 != p2->second.end() && q3 != q2->second.end())
+				{
+					if (p3->first == q3->first)
+					{
+						map<size_t, map<vector<stackNode>::size_type, size_t>>::iterator p4 = p3->second.begin();
+						map<size_t, map<vector<stackNode>::size_type, size_t>>::iterator q4 = q3->second.begin();
+						while (p4 != p3->second.end() && q4 != q3->second.end())
+						{
+							if (p4->first == q4->first)
+							{
+								map<vector<stackNode>::size_type, size_t>::iterator p5 = p4->second.begin();
+								map<vector<stackNode>::size_type, size_t>::iterator q5 = q4->second.begin();
+								while (p5 != p4->second.end() && q5 != q4->second.end())
+								{
+									if (p5->first == q5->first)
+									{
+										size_p += p5->second;
+										size_q += q5->second;
+										++p5;
+										++q5;
+									}
+									else if (p5->first < q5->first)
+									{
+										++p5;
+									}
+									else
+									{
+										++q5;
+									}
+								}
+								++p4;
+								++q4;
+							}
+							else if (p4->first < q4->first)
+							{
+								++p4;
+							}
+							else
+							{
+								++q4;
+							}
+						}
+						++p3;
+						++q3;
+					}
+					else if (p3->first < q3->first)
+					{
+						++p3;
+					}
+					else
+					{
+						++q3;
+					}
+				}
+				++p2;
+				++q2;
+			}
+			else if (p2->first < q2->first)
+			{
+				++p2;
+			}
+			else
+			{
+				++q2;
+			}
+		}
+
+		if (size_p < size_q)
+			break;
+		p = q;
+		++q;
+	}
+
+	size_t original_max_covered_index = max_covered_index;
+	if (finish_store && stateStack.back().stateSet.find(acceptstate) != stateStack.back().stateSet.end() || finish_store == false)
+	{
+		if (finish_store)
+		{
+			computeCurrentMatchStr(partial_matcn_str, last_contain_accept_state, stateStack);
+		}
+
+		if (q != non_greedy_match_result_for_every_end.end())
+		{
+			vector<stackNode>::size_type i = q->first - 1;
+			if (partial_matcn_str[max_covered_index].size() < i)
+			{
+				size_t m = partial_matcn_str.size() - 2;
+				while (true)
+				{
+					if (partial_matcn_str[m].size() <= i)
+					{
+						if (partial_matcn_str[m].size() > partial_matcn_str[max_covered_index].size())
+						{
+							max_covered_index = m;
+						}
+						break;
+					}
+					--m;
+				}
+			}
+		}
+		else
+		{
+			max_covered_index = stateStack.size() - 1;
+		}
+	}
+	else
+	{
+		if (TF)
+			return false;
+		return true;
+	}
+
+	for (size_t j = original_max_covered_index + 1; j <= max_covered_index; ++j)
+	{
+		if (matchtype == match_type::POSITIVE_SURE_PRE)
+		{
+			input.seekg(-static_cast<long>(trace - partial_matcn_str[j].size()), ios::cur);
+			if (sp_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_start, prematch.pre_nomatch_accept) == true)
+			{
+				finalresult->push_back(matchResult(partial_matcn_str[j], startPosition));
+			}
+		}
+		else if (matchtype == match_type::POSITIVE_NEGA_PRE)
+		{
+			input.seekg(-static_cast<long>(trace - partial_matcn_str[j].size()), ios::cur);
+			if (sp_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_start, prematch.pre_nomatch_accept) == false)
+			{
+				finalresult->push_back(matchResult(partial_matcn_str[j], startPosition));
+			}
+		}
+		else if (matchtype == match_type::NEGATIVE_SURE_PRE || matchtype == match_type::NEGATIVE_NEGA_PRE || matchtype == match_type::COMMON)
+		{
+				finalresult->push_back(matchResult(partial_matcn_str[j], startPosition));
+		}
+	}
+
+	if (finish_store)
+	{
+		if (TF == false)
+			return true;
+	}
+	return false;
+}
+
+shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &input, shared_ptr<Graph<vertex, edge>> &NFA, size_t startstate, size_t acceptstate, bool TF, match_type matchtype)//(反向引用编号,((子表达式开始态编号,子表达式结束态编号),(抵达子表达式开始态时对应栈节点编号,前述四项共同决定的匹配结果)))
 {
 	shared_ptr<vector<matchResult>> finalresult = make_shared<vector<RELALRParsing::matchResult>>();   //保存所有匹配结果的表
 
 	while (input.peek() != EOF)
 	{
+		streampos startPosition = input.tellg();
+		if (matchtype == match_type::NEGATIVE_SURE_PRE)
+		{
+			if (np_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_accept, prematch.pre_nomatch_start) == false)  //返回true不参与匹配部分匹配成功否则失败
+			{
+				input.seekg(startPosition);
+				input.seekg(1, ios::cur);
+				continue;
+			}
+			input.seekg(startPosition);
+		}
+		else if (matchtype == match_type::NEGATIVE_NEGA_PRE)
+		{
+			if (np_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_accept, prematch.pre_nomatch_start) == true)  //返回true不参与匹配部分匹配成功否则失败
+			{
+				input.seekg(startPosition);
+				input.seekg(1, ios::cur);
+				continue;
+			}
+			input.seekg(startPosition);
+		}
+
+		map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> subExpMatch;
 		char ch;
 		input >> noskipws;
 		vector<stackNode> stateStack;
 		stateStack.push_back(stackNode());
 		stateStack.back().stateSet.insert(startstate);
-		map<size_t, map<vector<stackNode>::size_type, map<int, bool>>> start; //(子表达式开始状态编号,(抵达子表达式开始态时的栈节点下标,(子表达式开始态对应的子表达式组号, 是否首次处理开始态+栈节点下标[true首次否则相反])))
+		map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> start; //(子表达式开始状态编号,(抵达子表达式开始态时的栈节点下标,(子表达式开始态对应的子表达式组号, 是否首次处理开始态+栈节点下标[true首次否则相反])))
 		map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> end;    //(NFA结束状态编号, NFA结束状态对应栈节点下标)
 		shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> stateRelateSubExpStart = make_shared<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>();  //(栈节点中的状态号,(子表达式开始状态号，子表达式开始对应栈节点下标集))
 		map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> returnToSubExpStart; //(子表达式开始态号,(相同的子表达式开始态号,子表达式开始态对应栈节点下标)) 匹配路径从给定子表达式开始态及对应栈节点重新回到给定子表达式开始态及对应栈节点时stateRelateSubExpStart会出现的元组
@@ -1667,8 +1870,12 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 		//闭包非贪婪起始态号,对应栈节点下标,对应非贪婪起始态,非贪婪起始态对应栈节点下标
 		map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> start_in_bound_related_to_nogreedy_start;
 		//start_in_bound状态编号,对应栈节点下标,对应nogreedy起始态下标,nogreedy起始态对应栈节点编号
-		streampos startPosition = input.tellg();
 
+		vector<string> partial_matcn_str = { "" };
+		size_t last_contain_accept_state = 0;
+		vector<bool> partial_matcn_str_used = { false };
+		size_t max_covered_index = 0;
+		long long trace = 0;
 		while (input >> ch)
 		{
 			CalClosure(*NFA, stateStack.back().stateSet, tranSubexpStartTemp);
@@ -1679,13 +1886,25 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 
 			ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, *NFA, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 			selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, acceptstate, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, *NFA);
-				
+			
+			if (last_contain_accept_state != 0)
+			{
+				if (stateStack.back().stateSet.find(acceptstate) != stateStack.back().stateSet.end())
+				{
+					computeCurrentMatchStr(partial_matcn_str, last_contain_accept_state, stateStack);
+					last_contain_accept_state = stateStack.size() - 1;
+					store_match(finalresult, non_greedy_match_result_for_every_end, stateStack, startPosition, input, true, false, acceptstate, matchtype, partial_matcn_str, max_covered_index, last_contain_accept_state, trace);
+				}
+			}
+
+
 			stackNode newstacknode;
 			stateStack.back().matchedChar = ch;
 			CalNewState(non_greedy_match_result_for_every_end, non_greedy_tran, end, start, returnToSubExpStart, input, stateRelateSubExpStart, tranSubexpStartTemp, *NFA, stateStack, newstacknode, reverref_match_result, subExpMatch, ch, acceptstate, closure_nogreedy_match_count, closure_nogreedy_start_related_to_nogreedy_start, start_in_bound_related_to_nogreedy_start);
 			processReverrefMatch(input, *tranSubexpStartTemp, newstacknode, reverref_match_result);
-
 			stateStack.push_back(newstacknode);
+			++trace;
+
 			if (stateStack.back().stateSet.empty() && reverref_match_result.empty() || input.peek() == EOF)
 			{
 				if (stateStack.back().stateSet.empty() == false)
@@ -1696,190 +1915,15 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 					selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, acceptstate, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, *NFA);
 				}
 
-				map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>::iterator p = non_greedy_match_result_for_every_end.begin();
-				map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>::iterator q = p;
-				if (q!= non_greedy_match_result_for_every_end.end())
-				  ++q;
-				while (q != non_greedy_match_result_for_every_end.end())
+				if (store_match(finalresult, non_greedy_match_result_for_every_end, stateStack, startPosition, input, true, true, acceptstate, matchtype, partial_matcn_str, max_covered_index, last_contain_accept_state, trace))
 				{
-					size_t size_p = 0;
-					size_t size_q = 0;
-					map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>::iterator p2 = p->second.begin();
-					map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>::iterator q2 = q->second.begin();
-					while (p2 != p->second.end() && q2 != q->second.end())
-					{
-						if (p2->first == q2->first)
-						{
-							map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>::iterator p3 = p2->second.begin();
-							map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>::iterator q3 = q2->second.begin();
-							while (p3 != p2->second.end() && q3 != q2->second.end())
-							{
-								if (p3->first == q3->first)
-								{
-									map<size_t, map<vector<stackNode>::size_type, size_t>>::iterator p4 = p3->second.begin();
-									map<size_t, map<vector<stackNode>::size_type, size_t>>::iterator q4 = q3->second.begin();
-									while (p4 != p3->second.end() && q4 != q3->second.end())
-									{
-										if (p4->first == q4->first)
-										{
-											map<vector<stackNode>::size_type, size_t>::iterator p5 = p4->second.begin();
-											map<vector<stackNode>::size_type, size_t>::iterator q5 = q4->second.begin();
-											while (p5 != p4->second.end() && q5 != q4->second.end())
-											{
-												if (p5->first == q5->first)
-												{
-													size_p += p5->second;
-													size_q += q5->second;
-													++p5;
-													++q5;
-												}
-												else if (p5->first < q5->first)
-												{
-													++p5;
-												}
-												else
-												{
-													++q5;
-												}
-											}
-											++p4;
-											++q4;
-										}
-										else if (p4->first < q4->first)
-										{
-											++p4;
-										}
-										else
-										{
-											++q4;
-										}
-									}
-									++p3;
-									++q3;
-								}
-								else if (p3->first < q3->first)
-								{
-									++p3;
-								}
-								else
-								{
-									++q3;
-								}
-							}
-							++p2;
-							++q2;
-						}
-						else if (p2->first < q2->first)
-						{
-							++p2;
-						}
-						else
-						{
-							++q2;
-						}
-					}
-
-					if (size_p < size_q)
-						break;
-					p = q;
-					++q;
-				}
-
-				vector<stackNode>::size_type i;
-				if (q != non_greedy_match_result_for_every_end.end())
-					i = q->first - 1;
-				else
-					i = stateStack.size() - 1;
-
-				for (; i >= 0; --i)
-				{
-					if ((stateStack[i].stateSet.empty() == false && stateStack[i].stateSet.find(acceptstate) != stateStack[i].stateSet.end() && i > 0) || i == 0)
-						break;
-				}
-
-				if (i > 0)
-				{
-					string temp;
-					for (size_t j = 0; j < i; ++j)
-					{
-						string temp2(" ");
-						temp2[0] = stateStack[j].matchedChar;
-						temp = temp + temp2;
-					}   //发现的最长匹配保存在temp中
-					if (TF == false)
-					{
-						if (matchtype == match_type::POSITIVE_SURE_PRE)
-						{
-							input.seekg(-static_cast<long>(stateStack.size() - 1 - i), ios::cur);
-							if (sp_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_start, prematch.pre_nomatch_accept, subExpMatch) == true)
-								return make_shared<vector<matchResult>>(1, matchResult(temp, startPosition, temp.size()));
-						}
-						else if (matchtype == match_type::POSITIVE_NEGA_PRE)
-						{
-							input.seekg(-static_cast<long>(stateStack.size() - 1 - i), ios::cur);
-							if (sp_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_start, prematch.pre_nomatch_accept, subExpMatch) == false)
-								return make_shared<vector<matchResult>>(1, matchResult(temp, startPosition, temp.size()));
-						}
-						else if (matchtype == match_type::NEGATIVE_SURE_PRE)
-						{
-							input.seekg(startPosition);
-							if (np_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_accept, prematch.pre_nomatch_start, subExpMatch) == true)
-								return make_shared<vector<matchResult>>(1, matchResult(temp, startPosition, temp.size()));
-						}
-						else if (matchtype == match_type::NEGATIVE_NEGA_PRE)
-						{
-							input.seekg(startPosition);
-							if (np_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_accept, prematch.pre_nomatch_start, subExpMatch) == false)
-								return make_shared<vector<matchResult>>(1, matchResult(temp, startPosition, temp.size()));
-						}
-						else if (matchtype == match_type::COMMON)
-						{
-							return make_shared<vector<matchResult>>(1, matchResult(temp, startPosition, temp.size()));
-						}
-					}
-					else
-					{
-						if (matchtype == match_type::POSITIVE_SURE_PRE)
-						{
-							input.seekg(-static_cast<long>(stateStack.size() - 1 - i), ios::cur);
-							if (sp_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_start, prematch.pre_nomatch_accept, subExpMatch) == true)
-							{
-								finalresult->push_back(matchResult(temp, startPosition, temp.size()));
-							}
-						}
-						else if (matchtype == match_type::POSITIVE_NEGA_PRE)
-						{
-							input.seekg(-static_cast<long>(stateStack.size() - 1 - i), ios::cur);
-							if (sp_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_start, prematch.pre_nomatch_accept, subExpMatch) == false)
-							{
-								finalresult->push_back(matchResult(temp, startPosition, temp.size()));
-							}
-						}
-						else if (matchtype == match_type::NEGATIVE_SURE_PRE)
-						{
-							input.seekg(startPosition);
-							if (np_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_accept, prematch.pre_nomatch_start, subExpMatch) == true)  //返回true不参与匹配部分匹配成功否则失败
-								finalresult->push_back(matchResult(temp, startPosition, temp.size()));
-						}
-						else if (matchtype == match_type::NEGATIVE_NEGA_PRE)
-						{
-							input.seekg(startPosition);
-							if (np_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_accept, prematch.pre_nomatch_start, subExpMatch) == false)  //返回true不参与匹配部分匹配成功否则失败
-								finalresult->push_back(matchResult(temp, startPosition, temp.size()));
-						}
-						else if (matchtype == match_type::COMMON)
-						{
-							finalresult->push_back(matchResult(temp, startPosition, temp.size()));
-						}
-					}
-
+					return finalresult;
 				}
 				input.seekg(startPosition);
 				input.seekg(1, ios::cur);
 				break;
 			}
 		}
-		subExpMatch.clear();
 	}
 	return finalresult;
 }
@@ -2067,7 +2111,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 			shared_ptr<set<pair<string, pair<string, string>>, compare>> char_interval_set;
 			string caret;
 		};
-		shared_ptr<set<int>> ReverRefSet = nullptr;
+		shared_ptr<set<string>> ReverRefSet = nullptr;
 
 		grammarsymbolnode(shared_ptr<Graph<vertex, edge>> &N, size_t s, size_t a, unterminalsymbol f) :subExpr(N, s, a), flag(f) {}
 		grammarsymbolnode(const string &first, const string &second, unterminalsymbol f) :Token(first, second), flag(f) {}
@@ -2109,6 +2153,9 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 	pair<string, string> Token = { "", "" };
 	bool readNextToken = true;
 	int subExpNum = 0;  //用来生成子表达式组号
+	set<string> cap_group_id; //用来判断是否有重复名称的命名捕获
+	set<string> reverf_group_id;  //对应命名捕获的反向引用捕获名
+	set<int> reverf; //对应于匿名捕获子表达式组号的反向引用
 	while (true)  //开始自底向上的LALR语法分析，使用S属性的语法制导翻译方案构造正则表达式对应的NFA
 	{
 		if (readNextToken)
@@ -2143,6 +2190,35 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					new (&commonmatch) common_match(parsingStack.back().symbolinfo->subExpr.NFAGraph, parsingStack.back().symbolinfo->subExpr.start, parsingStack.back().symbolinfo->subExpr.accept);
 				}
 
+				if (subExpNum == 0 && reverf.empty() == false)
+				{
+					cout << "ERROR:不存在子表达式但存在反向引用" << endl;
+					return false;
+				}
+
+				for (set<int>::iterator run = reverf.begin(); run != reverf.end(); ++run)
+				{
+					if (*run > subExpNum)
+					{
+						cout << "ERROR:反向引用\\" << *run << "没有对应的子表达式" << endl;
+						return false;
+					}
+				}
+
+				if (cap_group_id.empty() && reverf_group_id.empty() == false)
+				{
+					cout << "ERROR:没有命名捕获子表达式但是存在命名捕获反向引用" << endl;
+					return false;
+				}
+
+				for (set<string>::iterator run = reverf_group_id.begin(); run != reverf_group_id.end(); ++run)
+				{
+					if (cap_group_id.find(*run) == cap_group_id.end())
+					{ 
+						cout << "ERROR:命名捕获名为" << *run << "的反向引用没有对应的命名捕获子表达式" << endl;
+						return false;
+					}
+				}
 				cout << "语法分析和NFA构造完成" << endl;
 				return true;
 			}
@@ -2218,7 +2294,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					tempGraph->addEdge(newstart, start2, new edge("", edge::type::OTHER));
 					tempGraph->addEdge(accept1, newaccept, new edge("", edge::type::OTHER));
 					tempGraph->addEdge(accept2, newaccept, new edge("", edge::type::OTHER));
-					shared_ptr<set<int>> tempptr = nullptr;
+					shared_ptr<set<string>> tempptr = nullptr;
 					if (parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet != nullptr)
 					{
 						/*cout << "ERROR:反向引用不能直接或间接地作为|运算符的运算分量" << endl;
@@ -2247,10 +2323,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	9:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.NFAGraph, parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.start, parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.accept, grammarsymbolnode::unterminalsymbol::E);
-					if (parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet != nullptr)
-					{
-						tempptr->ReverRefSet = parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet;
-					}
+					tempptr->ReverRefSet = parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet;
 					parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["E"]].LALRStateNumber, "E", ""));
 					parsingStack.back().symbolinfo = tempptr;
@@ -2264,7 +2337,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					size_t start2 = parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.start + parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph->getVertexNum();
 					size_t accept2 = parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.accept + parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph->getVertexNum();
 					tempGraph->addEdge(accept1, start2, new edge("", edge::type::OTHER));
-					shared_ptr<set<int>> tempptr = nullptr;
+					shared_ptr<set<string>> tempptr = nullptr;
 					if (parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet != nullptr)
 					{
 						tempptr = parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet;
@@ -2275,10 +2348,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					}
 					else
 					{
-						if (parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet != nullptr)
-						{
-							tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
-						}
+						tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					}
 					parsingStack.pop_back(); parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["T"]].LALRStateNumber, "T", ""));
@@ -2289,10 +2359,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	11:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.NFAGraph, parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.start, parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.accept, grammarsymbolnode::unterminalsymbol::T);
-					if (parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet != nullptr)
-					{
-						tempptr->ReverRefSet = parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet;
-					}
+					tempptr->ReverRefSet = parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet;
 					parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["T"]].LALRStateNumber, "T", ""));
 					parsingStack.back().symbolinfo = tempptr;
@@ -2301,7 +2368,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	12:
 				{
 					string temp = parsingStack.back().grammarSymbol.second;
-					shared_ptr<set<int>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
+					shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					if (temp == "+")
 					{
 						shared_ptr<Graph<vertex, edge>> tempGraph(Copy(*(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph)));
@@ -2350,7 +2417,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					tempG->addEdge(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept, newaccept, new edge("", edge::type::OTHER));
 					tempG->addEdge(newstart, newaccept, new edge("", edge::type::OTHER));
 
-					shared_ptr<set<int>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
+					shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					parsingStack.pop_back(); parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["M"]].LALRStateNumber, "M", ""));
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempG, newstart, newaccept, grammarsymbolnode::M);
@@ -2361,7 +2428,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				{
 					string temp = parsingStack.back().grammarSymbol.second;
 					int low = stoi(temp.substr(1, temp.size() - 2));
-					shared_ptr<set<int>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
+					shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					if (low == 0)
 					{
 						shared_ptr<Graph<vertex, edge>> tempGraph = make_shared<Graph<vertex, edge>>();
@@ -2396,7 +2463,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				{
 					string temp = parsingStack.back().grammarSymbol.second;
 					int low = stoi(temp.substr(1, temp.find_first_of(',') - 1));
-					shared_ptr<set<int>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
+					shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					if (low == 0)
 					{
 						shared_ptr<Graph<vertex, edge>> tempG = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph;
@@ -2450,7 +2517,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					int high = stoi(temp.substr(temp.find_first_of(',') + 1, temp.size() - temp.find_first_of(',') - 2));
 					if (0 <= low && low <= high)
 					{
-						shared_ptr<set<int>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
+						shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 						if (low == 0 && low == high)
 						{
 							shared_ptr<Graph<vertex, edge>> tempGraph = make_shared<Graph<vertex, edge>>();
@@ -2501,7 +2568,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	17:
 				{
 					string temp = parsingStack.back().grammarSymbol.second;
-					shared_ptr<set<int>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
+					shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					if (temp[0] == '*')
 					{
 						shared_ptr<Graph<vertex, edge>> tempG = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph;
@@ -2562,7 +2629,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				{
 					string temp = parsingStack.back().grammarSymbol.second;
 					int low = stoi(temp.substr(1, temp.find_first_of(',') - 1));
-					shared_ptr<set<int>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
+					shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					if (low == 0)
 					{
 						shared_ptr<Graph<vertex, edge>> tempG = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph;
@@ -2632,7 +2699,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					int high = stoi(temp.substr(temp.find_first_of(',') + 1, temp.size() - temp.find_first_of(',') - 3));
 					if (0 <= low && low < high)
 					{
-						shared_ptr<set<int>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
+						shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 						shared_ptr<Graph<vertex, edge>> tempGraph(Copy(*(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph)));
 						auto start = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start;
 						auto end = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept;
@@ -2693,41 +2760,59 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	20:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.NFAGraph, parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.start, parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.accept, grammarsymbolnode::unterminalsymbol::M);
-					if (parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet != nullptr)
-					{
-						tempptr->ReverRefSet = parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet;
-					}
+					tempptr->ReverRefSet = parsingStack[parsingStack.size() - 1].symbolinfo->ReverRefSet;
 					parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["M"]].LALRStateNumber, "M", ""));
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
 				case	21:
+				case    22:
 				{
-					if (parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet != nullptr)
+					if (productionNum == 22)
 					{
-						if (parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet->find(subExpNum + 1) != parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet->end())
+						if (cap_group_id.insert(parsingStack[parsingStack.size() - 3].grammarSymbol.second).second == false)
 						{
-							cout << "ERROR:反向引用\\" << subExpNum + 1 << "不能嵌套在它对应的子表达式内" << endl;
-							return false;
+							cout << "ERROR:命名捕获名" << parsingStack[parsingStack.size() - 3].grammarSymbol.second << "被多个命名捕获子表达式使用" << endl;
 						}
 					}
-					subExp.insert(make_pair(++subExpNum, parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph));
+
+					if (parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet != nullptr)
+					{
+						if (productionNum == 21)
+						{
+							if (parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet->find(to_string(subExpNum + 1)) != parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet->end())
+							{
+								cout << "ERROR:反向引用\\" << subExpNum + 1 << "不能嵌套在它对应的子表达式内" << endl;
+								return false;
+							}
+						}
+						else
+						{
+							if (parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet->find(string("k") + parsingStack[parsingStack.size() - 3].grammarSymbol.second) != parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet->end())
+							{
+								cout << "ERROR:反向引用\\" << string("k") + parsingStack[parsingStack.size() - 3].grammarSymbol.second << "不能嵌套在它对应的子表达式内" << endl;
+								return false;
+							}
+							
+						}
+					}
+					subExp.insert(make_pair(to_string(++subExpNum), parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph));
 					shared_ptr<Graph<vertex, edge>> tempGraph(Copy(*(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph)));
-					tempGraph->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->attrSet.insert(make_pair(vertex::SUBEXPRS, set<int>())).first->second.insert(subExpNum);
-					tempGraph->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->attrSet.insert(make_pair(vertex::SUBEXPRE, set<int>())).first->second.insert(subExpNum);
-					tempGraph->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->subExpStartPtr.insert(make_pair(subExpNum, tempGraph->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]));
+					tempGraph->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->attrSet.insert(make_pair(vertex::SUBEXPRS, set<string>())).first->second.insert(to_string(subExpNum));
+					tempGraph->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->attrSet.insert(make_pair(vertex::SUBEXPRE, set<string>())).first->second.insert(to_string(subExpNum));
+					tempGraph->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->subExpStartPtr.insert(make_pair(to_string(subExpNum), tempGraph->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]));
 
 					size_t start = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start;
 					size_t end = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept;
-					shared_ptr<set<int>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
+					shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					parsingStack.pop_back(); parsingStack.pop_back(); parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["F"]].LALRStateNumber, "F", ""));
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, start, end, grammarsymbolnode::F);
 					parsingStack.back().symbolinfo->ReverRefSet = tempptr;
-				}
+				} 
 				break;
-				case	22:
+				case 23:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.NFAGraph, parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.start, parsingStack[parsingStack.size() - 1].symbolinfo->subExpr.accept, grammarsymbolnode::unterminalsymbol::F);
 					parsingStack.pop_back();
@@ -2735,19 +2820,16 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	23:
+				case	24:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph, parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start, parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept, grammarsymbolnode::unterminalsymbol::F);
-					if (parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet != nullptr)
-					{
-						tempptr->ReverRefSet = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
-					}
+					tempptr->ReverRefSet = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					parsingStack.pop_back(); parsingStack.pop_back(); parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["F"]].LALRStateNumber, "F", ""));
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	24:
+				case	25:
 				{
 					string temp;
 					edge *tempedge = nullptr;
@@ -2761,9 +2843,13 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						}
 						else if (temp2 == "REVERSEREF")
 						{
-							tempedge = new edge(stoi(temp.substr(1)));
+							tempedge = new edge(temp.substr(1));
 						}
-						else if (temp2 == "UPPERALPHA" || temp2 == "LOWERALPHA" || temp2 == "DIGIT" || temp2 == "SPECMETA" || temp2 == "OTHERCHAR")  ////
+						else if (temp2 == "REVERSEREF_WITH_GROUPID")
+						{
+							tempedge = new edge(temp);
+						}
+						else if (temp2 == "UPPERALPHA" || temp2 == "LOWERALPHA" || temp2 == "DIGIT" || temp2 == "SPECMETA" || temp2 == "OTHERCHAR" || temp2 == "OCT_HEX_TRAN") 
 						{
 							if (temp == "$")
 							{
@@ -2794,7 +2880,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(tempGraph, 0, 1, grammarsymbolnode::F);
 					if (tempedge->flag == edge::type::REVERREF)
 					{
-						tempptr->ReverRefSet = make_shared<set<int>>();
+						tempptr->ReverRefSet = make_shared<set<string>>();
 						tempptr->ReverRefSet->insert(tempedge->reverref);
 					}
 					parsingStack.pop_back();
@@ -2802,7 +2888,6 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	25:
 				case	26:
 				case	27:
 				case	28:
@@ -2812,24 +2897,44 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	32:
 				case	33:
 				case	34:
-				case    35:
-				case    36:
 				{
-					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::outSquare);
+					reverf.insert(stoi(parsingStack[parsingStack.size() - 1].grammarSymbol.second.substr(1)));
+				}
+				case	35:
+				case    36:
+				case    37:
+				{
+
+				}
+				case    38:
+				{
+					shared_ptr<grammarsymbolnode> tempptr = nullptr;
+					if (productionNum == 38)
+					{
+						reverf_group_id.insert(parsingStack[parsingStack.size() - 1].grammarSymbol.second);
+						string process_str = "k";
+						process_str += parsingStack[parsingStack.size() - 1].grammarSymbol.second;
+						tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, process_str, grammarsymbolnode::unterminalsymbol::outSquare);
+					}
+					else
+					{
+						tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::outSquare);
+					}
+					
 					parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["outSquare"]].LALRStateNumber, "outSquare", ""));
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case    37:
-				case    38:
-				case	39:
+				case    39:
+				case    40:
+				case	41:
 				{
 					shared_ptr<Graph<vertex, edge>> tempGraph = make_shared<Graph<vertex, edge>>();
 					size_t start = tempGraph->addVertex(new vertex());
 					size_t accept = tempGraph->addVertex(new vertex());
 					shared_ptr<set<pair<string, pair<string, string>>, compare>> cis = parsingStack[parsingStack.size() - 4].symbolinfo->char_interval_set;
-					if (productionNum == 37 || productionNum == 39)
+					if (productionNum == 39 || productionNum == 41)
 					{					
 						while (true)
 						{
@@ -2917,9 +3022,9 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						}
 					}
 		
-					if (productionNum == 38 || productionNum == 39)
+					if (productionNum == 40 || productionNum == 41)
 					{
-						if (productionNum == 39)
+						if (productionNum == 41)
 						{
 							for (set<char>::iterator run = parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.begin(); run != parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.end(); )
 							{
@@ -2950,7 +3055,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 							}
 						}
 
-						if (productionNum == 38 || parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.empty() == false)
+						if (productionNum == 40 || parsingStack[parsingStack.size() - 2].symbolinfo->symbolset.empty() == false)
 						{
 							size_t newadd1 = tempGraph->addVertex(new vertex());
 							size_t newadd2 = tempGraph->addVertex(new vertex());
@@ -2972,30 +3077,30 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					}
 
 					parsingStack.pop_back(); parsingStack.pop_back(); parsingStack.pop_back(); 
-					if (productionNum == 38 || productionNum == 39)
+					if (productionNum == 40 || productionNum == 41)
 					{
 						parsingStack.pop_back(); 
-						if (productionNum == 39)
+						if (productionNum == 41)
 						   parsingStack.pop_back();
 					}
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["G"]].LALRStateNumber, "G", ""));
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, start, accept, grammarsymbolnode::G);
 				}
 				break;
-				case	40:
+				case	42:
 				{
 					parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["V"]].LALRStateNumber, "V", ""));
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>("^", grammarsymbolnode::unterminalsymbol::V);
 				}
 				break;
-				case	41:
+				case	43:
 				{
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["V"]].LALRStateNumber, "V", ""));
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>("", grammarsymbolnode::unterminalsymbol::V);
 				}
 				break;
-				case	42:
+				case	44:
 				{
 					shared_ptr<set<pair<string, pair<string, string>>, compare>> cis = parsingStack[parsingStack.size() - 2].symbolinfo->char_interval_set;
 					cis->insert(parsingStack[parsingStack.size() - 1].symbolinfo->range);
@@ -3004,7 +3109,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(cis);
 				}
 				break;
-				case	43:
+				case	45:
 				{
 					shared_ptr<set<pair<string, pair<string, string>>, compare>> cis = make_shared<set<pair<string, pair<string, string>>, compare>>();
 					cis->insert(parsingStack[parsingStack.size() - 1].symbolinfo->range);
@@ -3013,7 +3118,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(cis);
 				}
 				break;
-				case	44:
+				case	46:
 				{
 					pair<string, pair<string, string>> temp(parsingStack[parsingStack.size() - 4].symbolinfo->caret, pair<string, string>());
 					if (parsingStack[parsingStack.size() - 3].symbolinfo->Token.second == "")
@@ -3061,8 +3166,6 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(temp.first, temp.second.first, temp.second.second, grammarsymbolnode::BSQuotation);
 				}
 				break;
-				case	45:
-				case	46:
 				case	47:
 				case	48:
 				case	49:
@@ -3074,8 +3177,10 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	55:
 				case	56:
 				case	57:
-				case    58:
-				case    59:
+				case	58:
+				case	59:
+				case    60:
+				case    61:
 				{
 					shared_ptr<grammarsymbolnode> tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::inSquareRange);
 					parsingStack.pop_back();
@@ -3083,11 +3188,11 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	60:
-				case	61:
+				case	62:
+				case	63:
 				{
 					shared_ptr<grammarsymbolnode> tempptr;
-					if (productionNum == 60)
+					if (productionNum == 62)
 					{
 						tempptr = parsingStack[parsingStack.size() - 2].symbolinfo;
 					}
@@ -3100,7 +3205,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					if (parsingStack[parsingStack.size() - 1].symbolinfo->Token.second != "")
 					{
 						if (temp == "NONPRECAP" || temp == "POSITIVE-SURE-PRE" || temp == "POSITIVE-NEGA-PRE" || temp == "NEGATIVE-SURE-PRE" || temp == "NEGATIVE-NEGA-PRE" || temp == "ULBOUND" || temp == "LBOUND" || temp == "ULBOUND-NONGREEDY" || temp == "LBOUND-NONGREEDY" || temp == "CLOSURE-NONGREEDY" || temp == "GIVEN"
-							|| temp == "ONEORNOT" || temp == "REVERSEREF" || temp == "TRANMETA")
+							|| temp == "ONEORNOT" || temp == "REVERSEREF" || temp == "TRANMETA" || temp == "REVERSEREF_WITH_GROUPID" || temp == "GROUP-ID-CAP")
 						{
 							string temp2 = parsingStack[parsingStack.size() - 1].symbolinfo->Token.second;
 							for (string::size_type i = 0; i < temp2.size(); ++i)
@@ -3108,7 +3213,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 								tempptr->symbolset.insert(temp2[i]);
 							}
 						}
-						else if (temp == "SPECMETA" || temp == "OTHERMETA" || temp == "UPPERALPHA" || temp == "LOWERALPHA" || temp == "DIGIT" || temp == "CLOSURE" || temp == "CAP" || temp == "OTHERCHAR")
+						else if (temp == "SPECMETA" || temp == "OTHERMETA" || temp == "UPPERALPHA" || temp == "LOWERALPHA" || temp == "DIGIT" || temp == "CLOSURE" || temp == "CAP" || temp == "OTHERCHAR" || temp == "OCT_HEX_TRAN")
 						{
 							tempptr->symbolset.insert(strToChar(parsingStack[parsingStack.size() - 1].symbolinfo->Token.second));
 						}
@@ -3131,7 +3236,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 							tempptr->symbolset.insert(strToChar(temp));
 					}
 					parsingStack.pop_back();
-					if (productionNum == 60)
+					if (productionNum == 62)
 					{
 						parsingStack.pop_back();
 					}
@@ -3139,8 +3244,6 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case	62:
-				case	63:
 				case	64:
 				case	65:
 				case	66:
@@ -3151,25 +3254,48 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	71:
 				case	72:
 				case	73:
-				case    74:
-				case    75:
+				case	74:
+				case	75:
 				case    76:
+				case    77:
+				case    78:
+				case    79:
+				case    80:
 				{
 					shared_ptr<grammarsymbolnode> tempptr;
-					if (productionNum == 62)
+					if (productionNum == 64)
 					{
 						tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].symbolinfo->Token.first, parsingStack[parsingStack.size() - 1].symbolinfo->Token.second, grammarsymbolnode::unterminalsymbol::inSquare);
 					}
 					else
-					{
-						tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::inSquare);
+					{					
+						if (productionNum == 79 || productionNum == 80)
+						{
+							string process_str;
+							if (productionNum == 79)
+							{
+								process_str += "\\k<";
+							}
+							else
+							{
+								process_str += "(?<";
+							}						
+							process_str += parsingStack[parsingStack.size() - 1].grammarSymbol.second;
+							process_str += ">";
+							tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, process_str, grammarsymbolnode::unterminalsymbol::inSquare);
+						}
+						else
+						{
+							tempptr = make_shared<grammarsymbolnode>(parsingStack[parsingStack.size() - 1].grammarSymbol.first, parsingStack[parsingStack.size() - 1].grammarSymbol.second, grammarsymbolnode::unterminalsymbol::inSquare);
+						}
 					}
+
 					parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["inSquare"]].LALRStateNumber, "inSquare", ""));
 					parsingStack.back().symbolinfo = tempptr;
 				}
 				break;
-				case 77:
+				case 81:
 				{
 					shared_ptr<Graph<vertex, edge>> tempG = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph;
 					tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->start_or_end_flag_in_bound = vertex::StartOrEndInBound::START_IN_BOUND;
@@ -3186,7 +3312,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					tempG->addEdge(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept, newaccept, new edge("", edge::type::OTHER));
 					tempG->addEdge(newstart, newaccept, new edge("", edge::type::OTHER));
 
-					shared_ptr<set<int>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
+					shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					parsingStack.pop_back(); parsingStack.pop_back();
 					parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["M"]].LALRStateNumber, "M", ""));
 					parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempG, newstart, newaccept, grammarsymbolnode::M);
@@ -3217,10 +3343,10 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 
 	switch (RE[i])
 	{
-	case '^': {++i; return{ "^", "" }; }
-	case '$':
-	case '.': {string temp("a"); temp[0] = RE[i]; ++i; return { "SPECMETA", temp }; }
-	case '(': {
+	    case '^': {++i; return{ "^", "" }; }
+	    case '$':
+	    case '.': {string temp("a"); temp[0] = RE[i]; ++i; return { "SPECMETA", temp }; }
+	    case '(': 
 		if (i + 1 != RE.size() && RE[i + 1] == '?')   //??
 		{
 			++i;
@@ -3252,8 +3378,26 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 						}
 						else
 						{
-							--i;
-							return { "CAP" , "(" };
+							if (isdigit(RE[i + 1]) || islower(RE[i + 1]) || isupper(RE[i + 1]))
+							{
+								i = i + 2;
+								string group_id;
+								while (i != RE.size() && (isdigit(RE[i]) || islower(RE[i]) || isupper(RE[i])))
+								{
+									group_id += string(1, RE[i]);
+									++i;
+								}
+								if (i == RE.size())
+									return { "CAP" , "(" };
+								if (RE[i] == '>')  return { "GROUP-ID-CAP", group_id };
+								    return { "CAP" , "(" };
+
+							}
+							else
+							{
+								--i;
+								return { "CAP" , "(" };
+							}
 						}
 					}
 				}
@@ -3282,31 +3426,30 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 		{
 			++i; return { "CAP", "(" };
 		}
-	}
-	case '[': {++i; return { "[" , "" }; }
-	case ']': {++i; return{ "]", "" }; }
-	case '-': {++i; return{ "-", "" }; }
-	case '|': {++i; return{ "|", "" }; }
-	case ')': {++i; return{ ")", "" }; }
-	case ':':
-	case '=':
-	case '!':
-	case '<':
-	case '}': { string temp("a"); temp[0] = RE[i]; ++i; return { "OTHERMETA", temp }; }
-	case '\"':
-	case '\'':
-	case '#':
-	case '%':
-	case '&':
-	case ',':
-	case ';':
-	case '>':
-	case '@':
-	case '_':
-	case '`':
-	case ' ':
-	case '~': { string temp("a"); temp[0] = RE[i]; ++i; return { "OTHERCHAR", temp }; }
-	default: break;
+	    case '[': {++i; return { "[" , "" }; }
+	    case ']': {++i; return{ "]", "" }; }
+	    case '-': {++i; return{ "-", "" }; }
+	    case '|': {++i; return{ "|", "" }; }
+	    case ')': {++i; return{ ")", "" }; }
+	    case ':':
+	    case '=':
+	    case '!':
+	    case '<':
+	    case '}': { string temp("a"); temp[0] = RE[i]; ++i; return { "OTHERMETA", temp }; }
+	    case '\"':
+	    case '\'':
+	    case '#':
+	    case '%':
+	    case '&':
+	    case ',':
+	    case ';':
+	    case '>':
+	    case '@':
+	    case '_':
+	    case '`':
+	    case ' ':
+	    case '~': { string temp("a"); temp[0] = RE[i]; ++i; return { "OTHERCHAR", temp }; }
+	    default: break;
 	}
 
 	if (islower(RE[i]))
@@ -3336,12 +3479,12 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 	{
 		if (i == RE.size())
 		{
-			if (state == 2 || state == 3 || state == 4 || state == 5 || state == 6 )    //注意
+			if (state == 2 || state == 3 || state == 4 || state == 5 || state == 6)    //注意
 			{
 				i = start + 1;
 				return { "OTHERMETA", "{" };
 			}
-			else if (state == 11)
+			else if (state == 11 || state == 15)
 			{
 				return{ "OTHERCHAR", "\\" };
 			}
@@ -3472,7 +3615,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			{
 				i = start + 1;
 				return { "OTHERMETA", "{" };
-			}		
+			}
 			updateState(state, pre_state, pre_pre_state);
 			if (RE[i] == '}')
 			{
@@ -3579,6 +3722,12 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 				state = 9;
 				++i;
 			}
+			else if (RE[i] == 'k')
+			{
+				pre_state = state;
+				state = 15;
+				++i;
+			}
 			else
 			{
 				return{ "OTHERCHAR", "\\" };
@@ -3597,8 +3746,9 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			}
 			else
 			{
-				return { "OTHERCHAR", "/"};
+				return { "OTHERCHAR", "/" };
 			}
+			break;
 		case 13:
 			if (pre_pre_state == 13)
 			{
@@ -3623,6 +3773,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 				updateState(state, pre_state, pre_pre_state);
 				++i;
 			}
+			break;
 		case 14:
 			if (pre_pre_state == 14)
 			{
@@ -3645,7 +3796,7 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 			}
 			else if (i == RE.size() || !('0' <= RE[i] && RE[i] <= '9' || 'a' <= RE[i] && RE[i] <= 'f' || 'A' <= RE[i] && RE[i] <= 'F'))
 			{
-			    i = start + 1;
+				i = start + 1;
 				return { "OTHERCHAR", "/" };
 
 			}
@@ -3654,6 +3805,44 @@ pair<string, string> RELALRParsing::LEXER(string RE, string::size_type &i)
 				updateState(state, pre_state, pre_pre_state);
 				++i;
 			}
+			break;
+		case 15:
+		{
+			if (RE[i] == '<')
+			{
+				if (pre_state == 11)
+				{
+					updateState(state, pre_state, pre_pre_state);
+					++i;
+				}
+				else
+				{
+					return{ "OTHERCHAR", "\\" };
+				}
+			}
+			else if (isdigit(RE[i]) || islower(RE[i]) || isupper(RE[i]))
+			{
+				if (pre_state == 11)
+				{
+					return{ "OTHERCHAR", "\\" };
+				}
+				updateState(state, pre_state, pre_pre_state);
+				++i;
+			}
+			else if (RE[i] == '>')
+			{
+				if (pre_state == 11 || pre_pre_state == 11)
+				{
+					return{ "OTHERCHAR", "\\" };
+				}
+				return { "REVERSEREF_WITH_GROUPID", RE.substr(start + 3, i - start - 3) };
+			}
+			else
+			{
+				return{ "OTHERCHAR", "\\" };
+			}
+		}
+		break;
 		}
 	}
 }
