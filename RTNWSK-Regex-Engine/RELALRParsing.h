@@ -1319,16 +1319,15 @@ bool RELALRParsing::np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 
 		CalClosure(pre_nomatch_Graph, stateStack.back().stateSet, tranSubexpStartTemp);
 
-		if (stateStack.size() != 1 && stateStack.back().stateSet.find(pre_nomatch_accept) != stateStack.back().stateSet.end())
-		{
-			return true;
-		}
-
 		clearDeadStateStackIndex(pre_nomatch_Graph, stateRelateSubExpStart, tranSubexpStartTemp, start, returnToSubExpStart);
 		swap(stateRelateSubExpStart, tranSubexpStartTemp);
 		tranSubexpStartTemp->clear();
 
 		ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+		if (stateStack.size() != 1 && stateStack.back().stateSet.find(pre_nomatch_accept) != stateStack.back().stateSet.end())
+		{
+			return true;
+		}
 		selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, pre_nomatch_accept, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, pre_nomatch_Graph);
 
 		stackNode newstacknode;
@@ -1342,12 +1341,12 @@ bool RELALRParsing::np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 			if (stateStack.back().stateSet.empty() == false)
 			{
 				CalClosure(pre_nomatch_Graph, stateStack.back().stateSet, tranSubexpStartTemp);
+				swap(stateRelateSubExpStart, tranSubexpStartTemp);
+				ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 				if (stateStack.back().stateSet.find(pre_nomatch_accept) != stateStack.back().stateSet.end())
 				{
 					return true;
 				}
-				//swap(stateRelateSubExpStart, tranSubexpStartTemp);
-				//ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 				//selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, pre_nomatch_accept, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, pre_nomatch_Graph);
 			}
 			return false;
@@ -1401,15 +1400,15 @@ bool RELALRParsing::sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 	{
 		CalClosure(pre_nomatch_Graph, stateStack.back().stateSet, tranSubexpStartTemp);
 
-		if (stateStack.size() != 1 && stateStack.back().stateSet.find(pre_nomatch_accept) != stateStack.back().stateSet.end())
-		{
-			return true;
-		}
 		clearDeadStateStackIndex(pre_nomatch_Graph, stateRelateSubExpStart, tranSubexpStartTemp, start, returnToSubExpStart);
 		swap(stateRelateSubExpStart, tranSubexpStartTemp);
 		tranSubexpStartTemp->clear();
 
 		ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+		if (stateStack.size() != 1 && stateStack.back().stateSet.find(pre_nomatch_accept) != stateStack.back().stateSet.end())
+		{
+			return true;
+		}
 		selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, pre_nomatch_accept, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, pre_nomatch_Graph);
 
 		stackNode newstacknode;
@@ -1423,12 +1422,12 @@ bool RELALRParsing::sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 			if (stateStack.back().stateSet.empty() == false)
 			{
 				CalClosure(pre_nomatch_Graph, stateStack.back().stateSet, tranSubexpStartTemp);
+				swap(stateRelateSubExpStart, tranSubexpStartTemp);
+				ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 				if (stateStack.back().stateSet.find(pre_nomatch_accept) != stateStack.back().stateSet.end())
 				{
 					return true;
 				}
-				//swap(stateRelateSubExpStart, tranSubexpStartTemp);
-				//ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 				//selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, pre_nomatch_accept, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, pre_nomatch_Graph);
 			}
 			return false;
