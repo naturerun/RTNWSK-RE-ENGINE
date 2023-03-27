@@ -71,19 +71,28 @@ public:  //构造函数
 		enum class NonGreedySE { NONGREEDY_START, NONGREEDY_END, OTHER } non_greedy_start_end_flag = NonGreedySE::OTHER;
 		enum class StartOrEndInClosure { START_IN_CLOSURE, END_IN_CLOSURE, OTHER} start_or_end_flag_in_closure = StartOrEndInClosure::OTHER;
 		enum class StartOrEndInBound { START_IN_BOUND , OTHER} start_or_end_flag_in_bound = StartOrEndInBound::OTHER;
-		shared_ptr<map<size_t, vector<size_t>>> diff_between_start_in_bound_and_bound_end = nullptr;
+
+		enum class ReverseStartInBound { START_IN_REVERSE_BOUND, OTHER } reverse_start_in_bound = ReverseStartInBound::OTHER; ///
+		bool has_lower_level_diff_value = false;///////
+
+		enum class ReverseStartOrEndInClosure {START, END, OTHER} start_or_end_flag_in_reverse_closure = ReverseStartOrEndInClosure::OTHER;
+		shared_ptr<map<long, vector<long>>> diff_between_start_in_bound_and_bound_end = nullptr;
 		shared_ptr<long> diff_between_start_in_bound_and_non_greedy_start = nullptr;
-		shared_ptr<long> start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = nullptr;
-		shared_ptr<size_t> nogreedy_end_sub_start_in_closure = nullptr;
-		set<size_t> size;  //非贪婪终态编号-开始态编号定义的尺寸
+
+		shared_ptr<long> end_in_closure_sub_start_in_closure = nullptr;
+		shared_ptr<long> start_in_closure_sub_nogreedy_start = nullptr;
+
+		shared_ptr<long> nogreedy_end_sub_start_in_closure = nullptr;
+		set<long> size;  //非贪婪终态编号-开始态编号定义的尺寸
 		map<type, set<string>> attrSet;  //子表达式开始或结束对应的子表达式组号集合
 		map<string, Graph<vertex, edge>::GraphVertexNode *> subExpStartPtr;   //当前状态的子表达式组号和对应的子表达式开始状态的指针的映射关系
 		vertex(const vertex &be_copyied):non_greedy_start_end_flag(be_copyied.non_greedy_start_end_flag), start_or_end_flag_in_closure(be_copyied.start_or_end_flag_in_closure), start_or_end_flag_in_bound(be_copyied.start_or_end_flag_in_bound),
-			size(be_copyied.size), attrSet(be_copyied.attrSet), subExpStartPtr(be_copyied.subExpStartPtr)
+			size(be_copyied.size), attrSet(be_copyied.attrSet), subExpStartPtr(be_copyied.subExpStartPtr), reverse_start_in_bound(be_copyied.reverse_start_in_bound),
+			start_or_end_flag_in_reverse_closure(be_copyied.start_or_end_flag_in_reverse_closure), has_lower_level_diff_value(be_copyied.has_lower_level_diff_value)
 		{
 			if (be_copyied.diff_between_start_in_bound_and_bound_end != nullptr)
 			{
-				diff_between_start_in_bound_and_bound_end = make_shared<map<size_t, vector<size_t>>>(*be_copyied.diff_between_start_in_bound_and_bound_end);
+				diff_between_start_in_bound_and_bound_end = make_shared<map<long, vector<long>>>(*be_copyied.diff_between_start_in_bound_and_bound_end);
 			}
 
 			if (be_copyied.diff_between_start_in_bound_and_non_greedy_start != nullptr)
@@ -91,14 +100,19 @@ public:  //构造函数
 				diff_between_start_in_bound_and_non_greedy_start = make_shared<long>(*be_copyied.diff_between_start_in_bound_and_non_greedy_start);
 			}
 
-			if (be_copyied.start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure != nullptr)
+			if (be_copyied.start_in_closure_sub_nogreedy_start != nullptr)
 			{
-				start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = make_shared<long>(*be_copyied.start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure);
+				start_in_closure_sub_nogreedy_start = make_shared<long>(*be_copyied.start_in_closure_sub_nogreedy_start);
+			}
+
+			if (be_copyied.end_in_closure_sub_start_in_closure != nullptr)
+			{
+				end_in_closure_sub_start_in_closure = make_shared<long>(*be_copyied.end_in_closure_sub_start_in_closure);
 			}
 
 			if (be_copyied.nogreedy_end_sub_start_in_closure != nullptr)
 			{
-				nogreedy_end_sub_start_in_closure = make_shared<size_t>(*be_copyied.nogreedy_end_sub_start_in_closure);
+				nogreedy_end_sub_start_in_closure = make_shared<long>(*be_copyied.nogreedy_end_sub_start_in_closure);
 			}
 		}
 		vertex() = default;
@@ -209,6 +223,49 @@ void RELALRParsing::ReversalGraph(Graph<vertex, edge> &BereversedGraph)
 	BereversedGraph.ReversalGraph();
 	for (size_t i = 0; i < BereversedGraph.getVertexNum(); ++i)
 	{
+		if (BereversedGraph.SetOfVertex[i]->Vertexdatafield->non_greedy_start_end_flag == vertex::NonGreedySE::NONGREEDY_END)
+		{
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->non_greedy_start_end_flag = vertex::NonGreedySE::NONGREEDY_START;
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->diff_between_start_in_bound_and_bound_end = nullptr;
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->nogreedy_end_sub_start_in_closure = nullptr;
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->size.clear();
+		}
+		else if (BereversedGraph.SetOfVertex[i]->Vertexdatafield->non_greedy_start_end_flag == vertex::NonGreedySE::NONGREEDY_START)
+		{
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->non_greedy_start_end_flag = vertex::NonGreedySE::NONGREEDY_END;
+		}
+
+		if (BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_bound ==  vertex::StartOrEndInBound::START_IN_BOUND)
+		{
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_bound = vertex::StartOrEndInBound::OTHER;
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start = nullptr;
+		}
+
+		if (BereversedGraph.SetOfVertex[i]->Vertexdatafield->reverse_start_in_bound == vertex::ReverseStartInBound::START_IN_REVERSE_BOUND)
+		{
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_bound = vertex::StartOrEndInBound::START_IN_BOUND;
+		}
+
+		if (BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_closure == vertex::StartOrEndInClosure::START_IN_CLOSURE)
+		{
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_closure = vertex::StartOrEndInClosure::OTHER;
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_in_closure_sub_nogreedy_start = nullptr;
+		}
+		else if (BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_closure == vertex::StartOrEndInClosure::END_IN_CLOSURE)
+		{
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_closure = vertex::StartOrEndInClosure::OTHER;
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->end_in_closure_sub_start_in_closure = nullptr;
+		}
+
+		if (BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_reverse_closure == vertex::ReverseStartOrEndInClosure::START)
+		{
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_closure = vertex::StartOrEndInClosure::START_IN_CLOSURE;
+		}
+		else if (BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_reverse_closure == vertex::ReverseStartOrEndInClosure::END)
+		{
+			BereversedGraph.SetOfVertex[i]->Vertexdatafield->start_or_end_flag_in_closure = vertex::StartOrEndInClosure::END_IN_CLOSURE;
+		}
+
 		map<vertex::type, set<string>>::iterator p;
 		if ((p = BereversedGraph.SetOfVertex[i]->Vertexdatafield->attrSet.find(vertex::SUBEXPRS)) != BereversedGraph.SetOfVertex[i]->Vertexdatafield->attrSet.end())
 		{
@@ -681,13 +738,13 @@ void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t
 			assist->insert(make_pair(*state, map<size_t, set<vector<stackNode>::size_type>>())).first->second.insert(make_pair(*state, set<vector<stackNode>::size_type>())).first->second.insert(stateStack.size() - 1);
 			initial.insert(*state);
 
-			map<size_t, vector<size_t>>::iterator secondit;
+			map<long, vector<long>>::iterator secondit;
 			if (NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_bound_end != nullptr)
 			{
 				secondit = NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->begin();
 			}
 			
-			for (set<size_t>::iterator it = NFA.SetOfVertex[*state]->Vertexdatafield->size.begin(); it != NFA.SetOfVertex[*state]->Vertexdatafield->size.end(); ++it)
+			for (set<long>::iterator it = NFA.SetOfVertex[*state]->Vertexdatafield->size.begin(); it != NFA.SetOfVertex[*state]->Vertexdatafield->size.end(); ++it)
 			{
 				if (NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_bound_end != nullptr && secondit != NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->end() && secondit->first == *it)
 				{
@@ -695,7 +752,7 @@ void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t
 					{
 						map<size_t, set<vector<stackNode>::size_type>> &tempref = stateRelateSubExpStart[*state];
 						map<size_t, set<vector<stackNode>::size_type>>::iterator q2 = tempref.begin();
-						vector<size_t>::iterator p2 = secondit->second.begin();
+						vector<long>::iterator p2 = secondit->second.begin();
 						while (p2 != secondit->second.end() && q2 != tempref.end())
 						{
 							if (*state - *p2 == q2->first)
@@ -873,7 +930,7 @@ void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t
 
 		if (NFA.SetOfVertex[*state]->Vertexdatafield->start_or_end_flag_in_closure == vertex::StartOrEndInClosure::END_IN_CLOSURE)
 		{
-			size_t start_in_closure_index = static_cast<size_t>(static_cast<long>(*state) - *(NFA.SetOfVertex[*state]->Vertexdatafield->start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure));
+			size_t start_in_closure_index = static_cast<size_t>(static_cast<long>(*state) - *(NFA.SetOfVertex[*state]->Vertexdatafield->end_in_closure_sub_start_in_closure));
 			set<vector<stackNode>::size_type> &tempref = stateRelateSubExpStart[*state][start_in_closure_index];
 			map<vector<stackNode>::size_type, size_t> &ref = closure_nogreedy_match_count[start_in_closure_index];
 			set<vector<stackNode>::size_type>::iterator it1 = tempref.begin();
@@ -896,14 +953,27 @@ void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t
 		if (NFA.SetOfVertex[*state]->Vertexdatafield->start_or_end_flag_in_bound == vertex::StartOrEndInBound::START_IN_BOUND)
 		{
 			map<size_t, set<vector<stackNode>::size_type>> &tempref = stateRelateSubExpStart[*state];
-			map<size_t, set<vector<stackNode>::size_type>>::iterator tempit = tempref.find(static_cast<size_t>(static_cast<long>(*state) - *(NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start)));
-			start_in_bound_related_to_nogreedy_start.insert(make_pair(*state, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>())).first->second.insert(make_pair(stateStack.size() - 1, map<size_t, set<vector<stackNode>::size_type>>())).first->second.insert(make_pair(tempit->first, set<vector<stackNode>::size_type>())).first->second.insert(tempit->second.begin(), tempit->second.end());
+			if (*(NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start) != 0)
+			{
+				map<size_t, set<vector<stackNode>::size_type>>::iterator tempit = tempref.find(static_cast<size_t>(static_cast<long>(*state) - *(NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start)));
+				start_in_bound_related_to_nogreedy_start.insert(make_pair(*state, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>())).first->second.insert(make_pair(stateStack.size() - 1, map<size_t, set<vector<stackNode>::size_type>>())).first->second.insert(make_pair(tempit->first, set<vector<stackNode>::size_type>())).first->second.insert(tempit->second.begin(), tempit->second.end());
+				if (NFA.SetOfVertex[*state]->Vertexdatafield->has_lower_level_diff_value)
+				{
+					map<size_t, set<vector<stackNode>::size_type>>::iterator tempit = tempref.find(*state);
+					start_in_bound_related_to_nogreedy_start.insert(make_pair(*state, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>())).first->second.insert(make_pair(stateStack.size() - 1, map<size_t, set<vector<stackNode>::size_type>>())).first->second.insert(make_pair(tempit->first, set<vector<stackNode>::size_type>())).first->second.insert(tempit->second.begin(), tempit->second.end());
+				}
+			}
+			else
+			{
+				map<size_t, set<vector<stackNode>::size_type>>::iterator tempit = tempref.find(*state);
+				start_in_bound_related_to_nogreedy_start.insert(make_pair(*state, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>())).first->second.insert(make_pair(stateStack.size() - 1, map<size_t, set<vector<stackNode>::size_type>>())).first->second.insert(make_pair(tempit->first, set<vector<stackNode>::size_type>())).first->second.insert(tempit->second.begin(), tempit->second.end());
+			}
 		}
 
 		if (NFA.SetOfVertex[*state]->Vertexdatafield->start_or_end_flag_in_closure == vertex::StartOrEndInClosure::START_IN_CLOSURE)
 		{
 			map<size_t, set<vector<stackNode>::size_type>> &tempref = stateRelateSubExpStart[*state];
-			map<size_t, set<vector<stackNode>::size_type>>::iterator tempit = tempref.find(static_cast<size_t>(static_cast<long>(*state) - *(NFA.SetOfVertex[*state]->Vertexdatafield->start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure)));
+			map<size_t, set<vector<stackNode>::size_type>>::iterator tempit = tempref.find(static_cast<size_t>(static_cast<long>(*state) - *(NFA.SetOfVertex[*state]->Vertexdatafield->start_in_closure_sub_nogreedy_start)));
 			closure_nogreedy_start_related_to_nogreedy_start.insert(make_pair(*state, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>())).first->second.insert(make_pair(stateStack.size() - 1, map<size_t, set<vector<stackNode>::size_type>>())).first->second.insert(make_pair(tempit->first, set<vector<stackNode>::size_type>())).first->second.insert(tempit->second.begin(), tempit->second.end());
 		}
 	}
@@ -2595,9 +2665,15 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						size_t newstart = tempG->addVertex(new vertex());
 						size_t newaccept = tempG->addVertex(new vertex());
 						tempG->SetOfVertex[newstart]->Vertexdatafield->start_or_end_flag_in_closure = vertex::StartOrEndInClosure::START_IN_CLOSURE;
-						tempG->SetOfVertex[newstart]->Vertexdatafield->start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = make_shared<long>(0);
-						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept) - static_cast<long>(newstart));
-						tempG->SetOfVertex[newaccept]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<size_t>(newaccept - newstart);
+						tempG->SetOfVertex[newstart]->Vertexdatafield->start_in_closure_sub_nogreedy_start = make_shared<long>(0);
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept) - static_cast<long>(newstart));
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start) - static_cast<long>(newaccept));
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->start_in_closure_sub_nogreedy_start = make_shared<long>(0);
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->start_or_end_flag_in_reverse_closure = vertex::ReverseStartOrEndInClosure::END;
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->start_or_end_flag_in_reverse_closure = vertex::ReverseStartOrEndInClosure::START;
+
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<long>(newaccept - newstart);
+						tempG->SetOfVertex[newstart]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<long>(static_cast<long>(newstart) - static_cast<long>(newaccept));
 						tempG->addEdge(newstart, parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start, new edge("", edge::type::OTHER));
 						tempG->addEdge(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept, newaccept, new edge("", edge::type::OTHER));
 						tempG->addEdge(newstart, newaccept, new edge("", edge::type::OTHER));
@@ -2606,7 +2682,8 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["M"]].LALRStateNumber, "M", ""));
 						tempG->SetOfVertex[newstart]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_START);
 						tempG->SetOfVertex[newaccept]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_END);
-						tempG->SetOfVertex[newaccept]->Vertexdatafield->size.insert(newaccept - newstart);
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->size.insert(static_cast<long>(newaccept - newstart));
+						tempG->SetOfVertex[newstart]->Vertexdatafield->size.insert(static_cast<long>(newstart) - static_cast<long>(newaccept));
 						parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempG, newstart, newaccept, grammarsymbolnode::M);
 					}
 					else
@@ -2626,9 +2703,15 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						tempG->addEdge(newstart, newaccept, new edge("", edge::type::OTHER));
 						vector<Graph<vertex, edge>::GraphVertexNode *>::size_type size = tempGraph->getVertexNum();
 
-						tempG->SetOfVertex[newstart]->Vertexdatafield->start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = make_shared<long>(newstart + size - start);
-						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept) - static_cast<long>(newstart));
-						tempG->SetOfVertex[newaccept]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<size_t>(newaccept - newstart);
+						tempG->SetOfVertex[newstart]->Vertexdatafield->start_in_closure_sub_nogreedy_start = make_shared<long>(newstart + size - start);
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept) - static_cast<long>(newstart));
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start) - static_cast<long>(newaccept));
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->start_in_closure_sub_nogreedy_start = make_shared<long>(0);
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->start_or_end_flag_in_reverse_closure = vertex::ReverseStartOrEndInClosure::END;
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->start_or_end_flag_in_reverse_closure = vertex::ReverseStartOrEndInClosure::START;
+
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<long>(newaccept - newstart);
+						tempG->SetOfVertex[newstart]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<long>(static_cast<long>(newstart) - static_cast<long>(newaccept));
 						merge(*tempGraph, *tempG, false);
 						tempGraph->addEdge(end, newstart + size, new edge("", edge::type::OTHER));
 						end = newaccept + size;
@@ -2637,7 +2720,8 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["M"]].LALRStateNumber, "M", ""));
 						tempGraph->SetOfVertex[start]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_START);
 						tempGraph->SetOfVertex[end]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_END);
-						tempGraph->SetOfVertex[end]->Vertexdatafield->size.insert(end - start);
+						tempGraph->SetOfVertex[end]->Vertexdatafield->size.insert(static_cast<long>(end - start));
+						tempGraph->SetOfVertex[start]->Vertexdatafield->size.insert(static_cast<long>(start) - static_cast<long>(end));
 						parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, start, end, grammarsymbolnode::M);
 					}
 					parsingStack.back().symbolinfo->ReverRefSet = tempptr;
@@ -2656,9 +2740,15 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						size_t newstart = tempG->addVertex(new vertex());
 						size_t newaccept = tempG->addVertex(new vertex());
 						tempG->SetOfVertex[newstart]->Vertexdatafield->start_or_end_flag_in_closure = vertex::StartOrEndInClosure::START_IN_CLOSURE;
-						tempG->SetOfVertex[newstart]->Vertexdatafield->start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = make_shared<long>(0);
-						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept)-static_cast<long>(newstart));
-						tempG->SetOfVertex[newaccept]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<size_t>(newaccept - newstart);
+						tempG->SetOfVertex[newstart]->Vertexdatafield->start_in_closure_sub_nogreedy_start = make_shared<long>(0);
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept)-static_cast<long>(newstart));
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start) - static_cast<long>(newaccept));
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->start_in_closure_sub_nogreedy_start = make_shared<long>(0);
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->start_or_end_flag_in_reverse_closure = vertex::ReverseStartOrEndInClosure::END;
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->start_or_end_flag_in_reverse_closure = vertex::ReverseStartOrEndInClosure::START;
+
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<long>(static_cast<long>(newaccept - newstart));
+						tempG->SetOfVertex[newstart]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<long>(static_cast<long>(newstart) - static_cast<long>(newaccept));
 						tempG->addEdge(newstart, parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start, new edge("", edge::type::OTHER));
 						tempG->addEdge(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept, newaccept, new edge("", edge::type::OTHER));
 						tempG->addEdge(newstart, newaccept, new edge("", edge::type::OTHER));
@@ -2667,7 +2757,8 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["M"]].LALRStateNumber, "M", ""));
 						tempG->SetOfVertex[newstart]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_START);
 						tempG->SetOfVertex[newaccept]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_END);
-						tempG->SetOfVertex[newaccept]->Vertexdatafield->size.insert(newaccept - newstart);
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->size.insert(static_cast<long>(newaccept - newstart));
+						tempG->SetOfVertex[newstart]->Vertexdatafield->size.insert(static_cast<long>(newstart) - static_cast<long>(newaccept));
 						parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempG, newstart, newaccept, grammarsymbolnode::M);
 					}
 					else
@@ -2693,9 +2784,15 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						tempG->addEdge(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept, newaccept, new edge("", edge::type::OTHER));
 						tempG->addEdge(newstart, newaccept, new edge("", edge::type::OTHER));
 						vector<Graph<vertex, edge>::GraphVertexNode *>::size_type size = tempGraph->getVertexNum();
-						tempG->SetOfVertex[newstart]->Vertexdatafield->start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = make_shared<long>(newstart + size - start);
-						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->start_in_closure_sub_nogreedy_start_or_end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept) - static_cast<long>(newstart));
-						tempG->SetOfVertex[newaccept]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<size_t>(newaccept - newstart);
+						tempG->SetOfVertex[newstart]->Vertexdatafield->start_in_closure_sub_nogreedy_start = make_shared<long>(newstart + size - start);
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept) - static_cast<long>(newstart));
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->end_in_closure_sub_start_in_closure = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start) - static_cast<long>(newaccept));
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->start_in_closure_sub_nogreedy_start = make_shared<long>(0);
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->start_or_end_flag_in_reverse_closure = vertex::ReverseStartOrEndInClosure::END;
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->start_or_end_flag_in_reverse_closure = vertex::ReverseStartOrEndInClosure::START;
+
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<long>(static_cast<long>(newaccept - newstart));
+						tempG->SetOfVertex[newstart]->Vertexdatafield->nogreedy_end_sub_start_in_closure = make_shared<long>(static_cast<long>(newstart) - static_cast<long>(newaccept));
 						merge(*tempGraph, *tempG, false);
 						tempGraph->addEdge(end, newstart + size, new edge("", edge::type::OTHER));
 						end = newaccept + size;
@@ -2704,7 +2801,8 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["M"]].LALRStateNumber, "M", ""));
 						tempGraph->SetOfVertex[start]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_START);
 						tempGraph->SetOfVertex[end]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_END);
-						tempGraph->SetOfVertex[end]->Vertexdatafield->size.insert(end - start);
+						tempGraph->SetOfVertex[end]->Vertexdatafield->size.insert(static_cast<long>(end - start));
+						tempGraph->SetOfVertex[start]->Vertexdatafield->size.insert(static_cast<long>(start) - static_cast<long>(end));
 						parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, start, end, grammarsymbolnode::M);
 					}
 					parsingStack.back().symbolinfo->ReverRefSet = tempptr;
@@ -2715,25 +2813,56 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					string temp = parsingStack.back().grammarSymbol.second;
 					int low = stoi(temp.substr(1, temp.find_first_of(',') - 1));
 					int high = stoi(temp.substr(temp.find_first_of(',') + 1, temp.size() - temp.find_first_of(',') - 3));
-					if (0 <= low && low < high)
+					if (low < high)
 					{
 						shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 						shared_ptr<Graph<vertex, edge>> tempGraph(Copy(*(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph)));
 						auto start = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start;
 						auto end = parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept;
 						size_t contact = 0;
-						shared_ptr<vector<size_t>> temp_vector = make_shared<vector<size_t>>();
+						shared_ptr<vector<long>> temp_vector = make_shared<vector<long>>();
+						long _size = static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.NFAGraph->getVertexNum());
+						long end_state = (high - 1) * _size;
+						long count = high - low;
+						map<long, vector<long>>::iterator it_p;
 						if (low == 1)
 							contact = end;
 						else if (low == 0)
 						{
+							++end_state;
 							contact = tempGraph->addVertex(new vertex());
 							tempGraph->addEdge(contact, end, new edge("", edge::type::OTHER));
 							tempGraph->addEdge(contact, start, new edge("", edge::type::OTHER));
 							tempGraph->SetOfVertex[start]->Vertexdatafield->start_or_end_flag_in_bound = vertex::StartOrEndInBound::START_IN_BOUND;
 							tempGraph->SetOfVertex[start]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start = make_shared<long>(static_cast<long>(start)- static_cast<long>(contact));
-							temp_vector->push_back(start);
+							tempGraph->SetOfVertex[end]->Vertexdatafield->reverse_start_in_bound = vertex::ReverseStartInBound::START_IN_REVERSE_BOUND;
+							temp_vector->push_back(static_cast<long>(start));
 							start = contact;
+							tempGraph->SetOfVertex[start]->Vertexdatafield->diff_between_start_in_bound_and_bound_end = make_shared<map<long, vector<long>>>();
+							it_p = tempGraph->SetOfVertex[start]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->insert(make_pair(static_cast<long>(start) - end_state, vector<long>(high))).first;
+							it_p->second[--count] = static_cast<long>(start) - static_cast<long>(end);
+							if (high == 1)
+							{
+								
+								if (tempGraph->SetOfVertex[end]->Vertexdatafield->has_lower_level_diff_value == false)
+								{
+									tempGraph->SetOfVertex[end]->Vertexdatafield->has_lower_level_diff_value = true;
+									tempGraph->SetOfVertex[end]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start = make_shared<long>(0);
+								}
+							}
+							else
+							{
+								tempGraph->SetOfVertex[end]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start = make_shared<long>(-end_state);
+							}
+						}
+
+						if (low != 0)
+						{
+							if (tempGraph->SetOfVertex[start]->Vertexdatafield->diff_between_start_in_bound_and_bound_end == nullptr)
+							{
+								tempGraph->SetOfVertex[start]->Vertexdatafield->diff_between_start_in_bound_and_bound_end = make_shared<map<long, vector<long>>>();			
+							}
+							it_p = tempGraph->SetOfVertex[start]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->insert(make_pair(static_cast<long>(start) - end_state, vector<long>(high - low))).first;
 						}
 						for (int i = 2; i <= high; ++i)
 						{
@@ -2747,6 +2876,20 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 								tempGraph->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start + size]->Vertexdatafield->start_or_end_flag_in_bound = vertex::StartOrEndInBound::START_IN_BOUND;
 								tempGraph->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start + size]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start + size) - static_cast<long>(start));
 								tempGraph->addEdge(contact, end, new edge("", edge::type::OTHER));
+								it_p->second[--count] = static_cast<long>(start) - static_cast<long>(end);
+								tempGraph->SetOfVertex[end]->Vertexdatafield->reverse_start_in_bound = vertex::ReverseStartInBound::START_IN_REVERSE_BOUND;
+								if (i != high)
+								{
+									tempGraph->SetOfVertex[end]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start = make_shared<long>(-((high - i) * _size));
+								}
+								else
+								{
+									if (tempGraph->SetOfVertex[end]->Vertexdatafield->has_lower_level_diff_value == false)
+									{
+										tempGraph->SetOfVertex[end]->Vertexdatafield->has_lower_level_diff_value = true;
+										tempGraph->SetOfVertex[end]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start = make_shared<long>(0);
+									}
+								}
 							}
 							else if (i == low)
 								contact = end;
@@ -2758,14 +2901,15 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 						}
 
 						if (tempGraph->SetOfVertex[end]->Vertexdatafield->diff_between_start_in_bound_and_bound_end == nullptr)
-							tempGraph->SetOfVertex[end]->Vertexdatafield->diff_between_start_in_bound_and_bound_end = make_shared<map<size_t, vector<size_t>>>();
-						tempGraph->SetOfVertex[end]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->insert(make_pair(end - start, *temp_vector));
+							tempGraph->SetOfVertex[end]->Vertexdatafield->diff_between_start_in_bound_and_bound_end = make_shared<map<long, vector<long>>>();
+						tempGraph->SetOfVertex[end]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->insert(make_pair(static_cast<long>(end - start), *temp_vector));
 						parsingStack.pop_back(); parsingStack.pop_back();
 						parsingStack.push_back(parsingStackNode((*(LALRParsing.LALRTable.second))[parsingStack.back().stateNum][(*(LALRParsing.LALRTable.first))["M"]].LALRStateNumber, "M", ""));
 						parsingStack.back().symbolinfo = make_shared<grammarsymbolnode>(tempGraph, start, end, grammarsymbolnode::M);
 						tempGraph->SetOfVertex[start]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_START);
 						tempGraph->SetOfVertex[end]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_END);
 						tempGraph->SetOfVertex[end]->Vertexdatafield->size.insert(end - start);
+						tempGraph->SetOfVertex[start]->Vertexdatafield->size.insert(static_cast<long>(start) - static_cast<long>(end));
 						parsingStack.back().symbolinfo->ReverRefSet = tempptr;
 					}
 					else
@@ -3323,12 +3467,23 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start = make_shared<long>(static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start) - static_cast<long>(newstart));
 					if (tempG->SetOfVertex[newaccept]->Vertexdatafield->diff_between_start_in_bound_and_bound_end == nullptr)
 					{
-						tempG->SetOfVertex[newaccept]->Vertexdatafield->diff_between_start_in_bound_and_bound_end = make_shared<map<size_t, vector<size_t>>>();
+						tempG->SetOfVertex[newaccept]->Vertexdatafield->diff_between_start_in_bound_and_bound_end = make_shared<map<long, vector<long>>>();
 					}
-					tempG->SetOfVertex[newaccept]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->insert(make_pair(newaccept - newstart, vector<size_t>(1, newaccept - parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start)));
+					tempG->SetOfVertex[newaccept]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->insert(make_pair(newaccept - newstart, vector<long>(1, newaccept - parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start)));
+
+					tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->reverse_start_in_bound = vertex::ReverseStartInBound::START_IN_REVERSE_BOUND;
+					if (tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->has_lower_level_diff_value == false)
+					{
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->has_lower_level_diff_value = true;
+						tempG->SetOfVertex[parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept]->Vertexdatafield->diff_between_start_in_bound_and_non_greedy_start = make_shared<long>(0);
+					}
+
 					tempG->addEdge(newstart, parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.start, new edge("", edge::type::OTHER));
 					tempG->addEdge(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept, newaccept, new edge("", edge::type::OTHER));
 					tempG->addEdge(newstart, newaccept, new edge("", edge::type::OTHER));
+
+					tempG->SetOfVertex[newstart]->Vertexdatafield->diff_between_start_in_bound_and_bound_end = make_shared<map<long, vector<long>>>();
+					tempG->SetOfVertex[newstart]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->insert(make_pair(static_cast<long>(newstart) - static_cast<long>(newaccept), vector<long>(1, static_cast<long>(newstart) - static_cast<long>(parsingStack[parsingStack.size() - 2].symbolinfo->subExpr.accept))));
 
 					shared_ptr<set<string>> tempptr = parsingStack[parsingStack.size() - 2].symbolinfo->ReverRefSet;
 					parsingStack.pop_back(); parsingStack.pop_back();
@@ -3337,6 +3492,7 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 					tempG->SetOfVertex[newstart]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_START);
 					tempG->SetOfVertex[newaccept]->Vertexdatafield->setNonGreedyStartEndFlag(vertex::NonGreedySE::NONGREEDY_END);
 					tempG->SetOfVertex[newaccept]->Vertexdatafield->size.insert(newaccept - newstart);
+					tempG->SetOfVertex[newstart]->Vertexdatafield->size.insert(static_cast<long>(newstart) - static_cast<long>(newaccept));
 					parsingStack.back().symbolinfo->ReverRefSet = tempptr;
 				}
 				break;
