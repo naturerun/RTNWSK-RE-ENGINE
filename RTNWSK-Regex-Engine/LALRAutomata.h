@@ -228,13 +228,12 @@ pair<shared_ptr<map<string, int>>, shared_ptr<vector<vector<LALRTableItem>>>> LA
 			(*LALRTablePtr)[i][temp->second].LALRStateNumber = p->head;
 		}
 	}
-	vector<map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>>> FLKSymbolTran;
+	vector<map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>>> FLKSymbolTran(SetOfVertex.size(), map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>>());
 	for (vector<Graph<LALRState, string>::GraphVertexNode*>::size_type i = 0; i < SetOfVertex.size(); ++i)   //计算各LR(0)内核项自发生成的向前看符号并确定LR(0)内核项集之间向前看符号的传播关系
 	{
-		FLKSymbolTran.push_back(map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>>());
 		for (map<long, map<int, set<string>>>::iterator p = SetOfVertex[i]->Vertexdatafield->kernel.begin(); p != SetOfVertex[i]->Vertexdatafield->kernel.end(); ++p)
 		{
-			map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>>::iterator x1 = FLKSymbolTran.back().insert(make_pair(p->first, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>())).first;
+			map<long, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>>::iterator x1 = FLKSymbolTran[i].insert(make_pair(p->first, map<int, map<vector<Graph<LALRState, string>::GraphVertexNode*>::size_type, map<long, set<int>>>>())).first;
 			for (map<int, set<string>>::iterator q = p->second.begin(); q != p->second.end(); ++q)
 			{
 				if (q->first != get<1>(productionSet[p->first]).size())
@@ -275,7 +274,7 @@ pair<shared_ptr<map<string, int>>, shared_ptr<vector<vector<LALRTableItem>>>> LA
 			}
 			if (x1->second.empty())
 			{
-				FLKSymbolTran.back().erase(x1);
+				FLKSymbolTran[i].erase(x1);
 			}
 		}
 	}
