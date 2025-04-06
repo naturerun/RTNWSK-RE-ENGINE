@@ -183,14 +183,14 @@ private:
 	static void calTran(shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, map<size_t, set<size_t>> &tran);  //在有边相连的顶点间传播传播项
 	static void addNewTranItemIntoTemp(shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, const size_t &start_state, const size_t &goal_state);   //将start_state对应的传播项传播至goal_state,然后将传播至goal_state的传播项并入tranSubexpStartTemp
 	static void CalClosure(const Graph<vertex, edge> &NFA, set<size_t> &initial_set, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp);  //计算initial_set的闭包并将tranSubexpStartTemp内的传播项传播至闭包内每一项
-	static void ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, const Graph<vertex, edge> &NFA, const vector<stackNode> &stateStack, map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end, map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &stateRelateSubExpStart, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, bool isLastProcessPerCycle,
+	static void ProcessSubExp(bool is_reverse_match, set<size_t> &stateSet, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, const Graph<vertex, edge> &NFA, const vector<stackNode> &stateStack, map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end, map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &stateRelateSubExpStart, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, bool isLastProcessPerCycle,
 		map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &start_in_bound_related_to_nogreedy_start,
 		map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &closure_nogreedy_start_related_to_nogreedy_start,
 		map<size_t, map<vector<stackNode>::size_type, size_t>> &closure_nogreedy_match_count);  //处理子表达式
 	static void selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, size_t acceptstate,
 		map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end,
 		map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, vector<stackNode> &stateStack, Graph<vertex, edge> &NFA);
-	void CalNewState(map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>& non_greedy_match_result_for_every_end, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>& non_greedy_tran, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>>& end,
+	void CalNewState(bool is_reverse_match, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>& non_greedy_match_result_for_every_end, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>& non_greedy_tran, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>>& end,
 		map<size_t, map<vector<stackNode>::size_type, map<string, bool>>>& start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>>& returnToSubExpStart, ifstream& input, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>& stateRelateSubExpStart,
 		shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>& tranSubexpStartTemp, Graph<vertex, edge>& NFA, vector<stackNode>& stateStack, stackNode& newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>>& reverref_match_result,
 		map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>>& subExpMatch, const char ch, size_t acceptstate,
@@ -206,8 +206,9 @@ private:
 	bool sp_nomatch_match(ifstream& input, Graph<vertex, edge>& pre_nomatch_Graph, vector<Graph<vertex, edge>::GraphVertexNode*>::size_type pre_nomatch_start, vector<Graph<vertex, edge>::GraphVertexNode*>::size_type pre_nomatch_accept);  //执行正向预查中不实际参与匹配的模式的匹配
 	bool store_match(shared_ptr<vector<matchResult>>& finalresult, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>& non_greedy_match_result_for_every_end,
 		vector<stackNode>& stateStack, streampos startPosition, ifstream& input,
-		bool TF, bool finish_store, size_t acceptstate, match_type matchtype, vector<string>& partial_matcn_str, size_t& max_covered_index, size_t& last_contain_accept_state, long long trace);
-	void computeCurrentMatchStr(vector<string>& partial_matcn_str, size_t last_contain_accept_state, vector<stackNode>& stateStack);
+		/*bool TF, bool finish_store, */size_t acceptstate, match_type matchtype/*, vector<string>& partial_matcn_str, size_t& max_covered_index, size_t& last_contain_accept_state, long long trace*/);
+	//void computeCurrentMatchStr(vector<string>& partial_matcn_str, size_t last_contain_accept_state, vector<stackNode>& stateStack);
+	void computeCurrentMatchStr(string& partial_matcn_str, vector<stackNode>& stateStack, size_t end_stack_state_index);
 	union
 	{
 		common_match commonmatch;
@@ -578,7 +579,7 @@ void RELALRParsing::calTran(shared_ptr<map<size_t, map<size_t, set<vector<stackN
 			break;
 	}
 }
-void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, const Graph<vertex, edge> &NFA, const vector<stackNode> &stateStack, map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end, map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &stateRelateSubExpStart, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, bool isLastProcessPerCycle,
+void RELALRParsing::ProcessSubExp(bool is_reverse_match, set<size_t> &stateSet, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, const Graph<vertex, edge> &NFA, const vector<stackNode> &stateStack, map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end, map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &stateRelateSubExpStart, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, bool isLastProcessPerCycle,
 	map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &start_in_bound_related_to_nogreedy_start,
 	map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &closure_nogreedy_start_related_to_nogreedy_start,
 	map<size_t, map<vector<stackNode>::size_type, size_t>> &closure_nogreedy_match_count)
@@ -746,7 +747,7 @@ void RELALRParsing::ProcessSubExp(set<size_t> &stateSet, map<size_t, pair<size_t
 			
 			for (set<long>::iterator it = NFA.SetOfVertex[*state]->Vertexdatafield->size.begin(); it != NFA.SetOfVertex[*state]->Vertexdatafield->size.end(); ++it)
 			{
-				if (NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_bound_end != nullptr && secondit != NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->end() && secondit->first == *it)
+				if (NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_bound_end != nullptr && secondit != NFA.SetOfVertex[*state]->Vertexdatafield->diff_between_start_in_bound_and_bound_end->end() && (secondit->first == *it || is_reverse_match))
 				{
 					map<size_t, set<vector<stackNode>::size_type>> temp_list;
 					{
@@ -1306,7 +1307,7 @@ pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, se
 	}
 	return { tran_on_wordboundornobound, wordboundornobound_tran_result };  //first为通过单词费单词边界以及行开始结束位置转移至的新状态和转移至新状态的状态集合的映射关系,second为传播至新状态的传播项集合
 }
-void RELALRParsing::CalNewState(map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end, 
+void RELALRParsing::CalNewState(bool is_reverse_match, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end,
 	map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, ifstream &input, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, 
 	shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, Graph<vertex, edge> &NFA, vector<stackNode> &stateStack, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, 
 	map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch, size_t acceptstate,
@@ -1328,7 +1329,7 @@ void RELALRParsing::CalNewState(map<vector<stackNode>::size_type, map<size_t, ma
 	}
 
 	CalClosure(NFA, initial_set, wordboundornobound.second);
-	ProcessSubExp(initial_set, returnToSubExpStart, NFA, stateStack, start, end, subExpMatch, *(wordboundornobound.second), non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+	ProcessSubExp(is_reverse_match, initial_set, returnToSubExpStart, NFA, stateStack, start, end, subExpMatch, *(wordboundornobound.second), non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 	selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(wordboundornobound.second, acceptstate, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, NFA);
 	(*(wordboundornobound.first)).clear();
 
@@ -1393,7 +1394,7 @@ bool RELALRParsing::np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 		swap(stateRelateSubExpStart, tranSubexpStartTemp);
 		tranSubexpStartTemp->clear();
 
-		ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+		ProcessSubExp(true, stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 		if (stateStack.size() != 1 && stateStack.back().stateSet.find(pre_nomatch_accept) != stateStack.back().stateSet.end())
 		{
 			return true;
@@ -1402,7 +1403,7 @@ bool RELALRParsing::np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 
 		stackNode newstacknode;
 		stateStack.back().matchedChar = ch;
-		CalNewState(non_greedy_match_result_for_every_end, non_greedy_tran, end, start, returnToSubExpStart, input, stateRelateSubExpStart, tranSubexpStartTemp, pre_nomatch_Graph, stateStack, newstacknode, reverref_match_result, subExpMatch, ch, pre_nomatch_accept, closure_nogreedy_match_count, closure_nogreedy_start_related_to_nogreedy_start, start_in_bound_related_to_nogreedy_start);
+		CalNewState(true, non_greedy_match_result_for_every_end, non_greedy_tran, end, start, returnToSubExpStart, input, stateRelateSubExpStart, tranSubexpStartTemp, pre_nomatch_Graph, stateStack, newstacknode, reverref_match_result, subExpMatch, ch, pre_nomatch_accept, closure_nogreedy_match_count, closure_nogreedy_start_related_to_nogreedy_start, start_in_bound_related_to_nogreedy_start);
 		processReverrefMatch(input, *tranSubexpStartTemp, newstacknode, reverref_match_result);
 
 		stateStack.push_back(newstacknode);
@@ -1412,7 +1413,7 @@ bool RELALRParsing::np_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 			{
 				CalClosure(pre_nomatch_Graph, stateStack.back().stateSet, tranSubexpStartTemp);
 				swap(stateRelateSubExpStart, tranSubexpStartTemp);
-				ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+				ProcessSubExp(true, stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 				if (stateStack.back().stateSet.find(pre_nomatch_accept) != stateStack.back().stateSet.end())
 				{
 					return true;
@@ -1474,7 +1475,7 @@ bool RELALRParsing::sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 		swap(stateRelateSubExpStart, tranSubexpStartTemp);
 		tranSubexpStartTemp->clear();
 
-		ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+		ProcessSubExp(false, stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 		if (stateStack.size() != 1 && stateStack.back().stateSet.find(pre_nomatch_accept) != stateStack.back().stateSet.end())
 		{
 			return true;
@@ -1483,7 +1484,7 @@ bool RELALRParsing::sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 
 		stackNode newstacknode;
 		stateStack.back().matchedChar = ch;
-		CalNewState(non_greedy_match_result_for_every_end, non_greedy_tran, end, start, returnToSubExpStart, input, stateRelateSubExpStart, tranSubexpStartTemp, pre_nomatch_Graph, stateStack, newstacknode, reverref_match_result, subExpMatch, ch, pre_nomatch_accept, closure_nogreedy_match_count, closure_nogreedy_start_related_to_nogreedy_start, start_in_bound_related_to_nogreedy_start);
+		CalNewState(false, non_greedy_match_result_for_every_end, non_greedy_tran, end, start, returnToSubExpStart, input, stateRelateSubExpStart, tranSubexpStartTemp, pre_nomatch_Graph, stateStack, newstacknode, reverref_match_result, subExpMatch, ch, pre_nomatch_accept, closure_nogreedy_match_count, closure_nogreedy_start_related_to_nogreedy_start, start_in_bound_related_to_nogreedy_start);
 		processReverrefMatch(input, *tranSubexpStartTemp, newstacknode, reverref_match_result);
 
 		stateStack.push_back(newstacknode);
@@ -1493,7 +1494,7 @@ bool RELALRParsing::sp_nomatch_match(ifstream &input, Graph<vertex, edge> &pre_n
 			{
 				CalClosure(pre_nomatch_Graph, stateStack.back().stateSet, tranSubexpStartTemp);
 				swap(stateRelateSubExpStart, tranSubexpStartTemp);
-				ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+				ProcessSubExp(false, stateStack.back().stateSet, returnToSubExpStart, pre_nomatch_Graph, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 				if (stateStack.back().stateSet.find(pre_nomatch_accept) != stateStack.back().stateSet.end())
 				{
 					return true;
@@ -1732,23 +1733,61 @@ void RELALRParsing::selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Re
 	}
 }
 
-void RELALRParsing::computeCurrentMatchStr(vector<string>& partial_matcn_str, size_t last_contain_accept_state, vector<stackNode>& stateStack)
+/*void RELALRParsing::computeCurrentMatchStr(vector<string>& partial_matcn_str, size_t last_contain_accept_state, vector<stackNode>& stateStack)
 {
 	partial_matcn_str.push_back(partial_matcn_str.back());
-	for (size_t j = last_contain_accept_state; j < stateStack.size() - 1; ++j)
+	for (size_t j = last_contain_accept_state; j < stateStack.size() - 2; ++j)
 	{
 		string temp2(" ");
 		temp2[0] = stateStack[j].matchedChar;
 		partial_matcn_str.back() = partial_matcn_str.back() + temp2;
 	}
+}*/
+
+void RELALRParsing::computeCurrentMatchStr(string &partial_matcn_str, vector<stackNode>& stateStack, size_t end_stack_state_index)
+{
+	for (size_t j = 0; j <= end_stack_state_index; ++j)
+	{
+		string temp2(" ");
+		temp2[0] = stateStack[j].matchedChar;
+		partial_matcn_str = partial_matcn_str + temp2;
+	}
 }
 
 bool RELALRParsing::store_match(shared_ptr<vector<matchResult>> &finalresult, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end, 
 	vector<stackNode> &stateStack, streampos startPosition, ifstream& input,
-	bool TF, bool finish_store, size_t acceptstate, match_type matchtype, vector<string> &partial_matcn_str, size_t &max_covered_index, size_t &last_contain_accept_state, long long trace)
+	/*bool TF, bool finish_store, */size_t acceptstate, match_type matchtype/*, vector<string>& partial_matcn_str, size_t& max_covered_index, size_t& last_contain_accept_state, long long trace*/ )
 {
 	map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>::iterator p = non_greedy_match_result_for_every_end.begin();
-	map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>::iterator q = p;
+	size_t end_stack_state_index;
+	if (p != non_greedy_match_result_for_every_end.end())
+	{
+		end_stack_state_index = p->first - 1;
+	}
+	else
+	{
+		end_stack_state_index = stateStack.size() - 2;
+		for (; ; --end_stack_state_index)
+		{
+			if (stateStack[end_stack_state_index].stateSet.find(acceptstate) != stateStack[end_stack_state_index].stateSet.end())
+			{
+				break;
+			}
+
+			if (end_stack_state_index == 0)
+			{
+				return false;
+			}
+		}
+
+		if (end_stack_state_index == 0)
+			return false;
+		--end_stack_state_index;
+	}
+
+	string partial_matcn_str;
+	computeCurrentMatchStr(partial_matcn_str, stateStack, end_stack_state_index);
+	/*map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>::iterator q = p;
 	if (q != non_greedy_match_result_for_every_end.end())
 		++q;
 	while (q != non_greedy_match_result_for_every_end.end())
@@ -1830,23 +1869,23 @@ bool RELALRParsing::store_match(shared_ptr<vector<matchResult>> &finalresult, ma
 			}
 		}
 
-		if (size_p < size_q)
+		if (size_p <= size_q)
 			break;
 		p = q;
 		++q;
 	}
 
 	size_t original_max_covered_index = max_covered_index;
-	if (finish_store && stateStack.back().stateSet.find(acceptstate) != stateStack.back().stateSet.end() || finish_store == false)
+	if (finish_store && stateStack[stateStack.size() - 2].stateSet.find(acceptstate) != stateStack[stateStack.size() - 2].stateSet.end() || finish_store == false)
 	{
 		if (finish_store)
 		{
 			computeCurrentMatchStr(partial_matcn_str, last_contain_accept_state, stateStack);
 		}
 
-		if (q != non_greedy_match_result_for_every_end.end())
+		if (p != non_greedy_match_result_for_every_end.end())
 		{
-			vector<stackNode>::size_type i = q->first - 1;
+			vector<stackNode>::size_type i = p->first - 1;
 			if (partial_matcn_str[max_covered_index].size() < i)
 			{
 				size_t m = partial_matcn_str.size() - 2;
@@ -1866,7 +1905,7 @@ bool RELALRParsing::store_match(shared_ptr<vector<matchResult>> &finalresult, ma
 		}
 		else
 		{
-			max_covered_index = stateStack.size() - 1;
+			max_covered_index = stateStack.size() - 3;
 		}
 	}
 	else
@@ -1874,9 +1913,9 @@ bool RELALRParsing::store_match(shared_ptr<vector<matchResult>> &finalresult, ma
 		if (TF)
 			return false;
 		return true;
-	}
+	}*/
 
-	for (size_t j = original_max_covered_index + 1; j <= max_covered_index; ++j)
+	/*for (size_t j = original_max_covered_index + 1; j <= max_covered_index; ++j)
 	{
 		if (matchtype == match_type::POSITIVE_SURE_PRE)
 		{
@@ -1898,14 +1937,44 @@ bool RELALRParsing::store_match(shared_ptr<vector<matchResult>> &finalresult, ma
 		{
 				finalresult->push_back(matchResult(partial_matcn_str[j], startPosition));
 		}
-	}
+	}*/
 
-	if (finish_store)
+    if (matchtype == match_type::POSITIVE_SURE_PRE)
+    {
+	    input.seekg(static_cast<long>(partial_matcn_str.size()), ios::cur);
+	    if (sp_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_start, prematch.pre_nomatch_accept) == true)
+	    {
+		    finalresult->push_back(matchResult(partial_matcn_str, startPosition));
+	    }
+		else
+		{
+			return false;
+		}
+    }
+    else if (matchtype == match_type::POSITIVE_NEGA_PRE)
+    {
+	    input.seekg(static_cast<long>(partial_matcn_str.size()), ios::cur);
+	    if (sp_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_start, prematch.pre_nomatch_accept) == false)
+	    {
+		    finalresult->push_back(matchResult(partial_matcn_str, startPosition));
+	    }
+		else
+		{
+			return false;
+		}
+    }
+    else if (matchtype == match_type::NEGATIVE_SURE_PRE || matchtype == match_type::NEGATIVE_NEGA_PRE || matchtype == match_type::COMMON)
+    {
+	    finalresult->push_back(matchResult(partial_matcn_str, startPosition));
+    }
+    
+	return true;
+	/*if (finish_store)
 	{
 		if (TF == false)
 			return true;
 	}
-	return false;
+	return false;*/
 }
 
 shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &input, shared_ptr<Graph<vertex, edge>> &NFA, size_t startstate, size_t acceptstate, bool TF, match_type matchtype)//(反向引用编号,((子表达式开始态编号,子表达式结束态编号),(抵达子表达式开始态时对应栈节点编号,前述四项共同决定的匹配结果)))
@@ -1959,11 +2028,11 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 		map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> start_in_bound_related_to_nogreedy_start;
 		//start_in_bound状态编号,对应栈节点下标,对应nogreedy起始态下标,nogreedy起始态对应栈节点编号
 
-		vector<string> partial_matcn_str = { "" };
-		size_t last_contain_accept_state = 0;
-		vector<bool> partial_matcn_str_used = { false };
-		size_t max_covered_index = 0;
-		long long trace = 0;
+		//vector<string> partial_matcn_str = { "" };
+		//size_t last_contain_accept_state = 0;
+		//vector<bool> partial_matcn_str_used = { false };
+		//size_t max_covered_index = 0;
+		//long long trace = 0;
 		while (input >> ch)
 		{
 			CalClosure(*NFA, stateStack.back().stateSet, tranSubexpStartTemp);
@@ -1972,10 +2041,10 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 			swap(stateRelateSubExpStart, tranSubexpStartTemp);
 			tranSubexpStartTemp->clear();
 
-			ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, *NFA, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+			ProcessSubExp(false, stateStack.back().stateSet, returnToSubExpStart, *NFA, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 			selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, acceptstate, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, *NFA);
 			
-			if (last_contain_accept_state != 0)
+			/*if (last_contain_accept_state != 0)
 			{
 				if (stateStack.back().stateSet.find(acceptstate) != stateStack.back().stateSet.end())
 				{
@@ -1983,15 +2052,15 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 					last_contain_accept_state = stateStack.size() - 1;
 					store_match(finalresult, non_greedy_match_result_for_every_end, stateStack, startPosition, input, true, false, acceptstate, matchtype, partial_matcn_str, max_covered_index, last_contain_accept_state, trace);
 				}
-			}
+			}*/
 
 
 			stackNode newstacknode;
 			stateStack.back().matchedChar = ch;
-			CalNewState(non_greedy_match_result_for_every_end, non_greedy_tran, end, start, returnToSubExpStart, input, stateRelateSubExpStart, tranSubexpStartTemp, *NFA, stateStack, newstacknode, reverref_match_result, subExpMatch, ch, acceptstate, closure_nogreedy_match_count, closure_nogreedy_start_related_to_nogreedy_start, start_in_bound_related_to_nogreedy_start);
+			CalNewState(false, non_greedy_match_result_for_every_end, non_greedy_tran, end, start, returnToSubExpStart, input, stateRelateSubExpStart, tranSubexpStartTemp, *NFA, stateStack, newstacknode, reverref_match_result, subExpMatch, ch, acceptstate, closure_nogreedy_match_count, closure_nogreedy_start_related_to_nogreedy_start, start_in_bound_related_to_nogreedy_start);
 			processReverrefMatch(input, *tranSubexpStartTemp, newstacknode, reverref_match_result);
 			stateStack.push_back(newstacknode);
-			++trace;
+			//++trace;
 
 			if (stateStack.back().stateSet.empty() && reverref_match_result.empty() || input.peek() == EOF)
 			{
@@ -1999,14 +2068,15 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 				{
 					CalClosure(*NFA, stateStack.back().stateSet, tranSubexpStartTemp);
 					swap(stateRelateSubExpStart, tranSubexpStartTemp);
-					ProcessSubExp(stateStack.back().stateSet, returnToSubExpStart, *NFA, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+					ProcessSubExp(false, stateStack.back().stateSet, returnToSubExpStart, *NFA, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 					selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, acceptstate, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, *NFA);
 				}
 
-				if (store_match(finalresult, non_greedy_match_result_for_every_end, stateStack, startPosition, input, true, true, acceptstate, matchtype, partial_matcn_str, max_covered_index, last_contain_accept_state, trace))
+				/*if (store_match(finalresult, non_greedy_match_result_for_every_end, stateStack, startPosition, input, true, true, acceptstate, matchtype/*, partial_matcn_str, max_covered_index, last_contain_accept_state, trace))
 				{
 					return finalresult;
-				}
+				}*/
+				store_match(finalresult, non_greedy_match_result_for_every_end, stateStack, startPosition, input, acceptstate, matchtype);
 				input.seekg(startPosition);
 				input.seekg(1, ios::cur);
 				break;
@@ -3060,7 +3130,10 @@ bool RELALRParsing::REParsing(string RE)  //编译和解析正则表达式
 				case	33:
 				case	34:
 				{
-					reverf.insert(stoi(parsingStack[parsingStack.size() - 1].grammarSymbol.second.substr(1)));
+					if (productionNum == 34)
+					{
+						reverf.insert(stoi(parsingStack[parsingStack.size() - 1].grammarSymbol.second.substr(1)));
+					}
 				}
 				case	35:
 				case    36:

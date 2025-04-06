@@ -26,7 +26,7 @@
 #b F $2 GROUP-ID-CAP $1 E $2 ) #e
 #b F $1 G #e
 #b F $2 NONPRECAP $1 E $2 ) #e
-#b F $1 outSquare #e   ///进度在这里
+#b F $1 outSquare #e
 #b outSquare $2 SPECTRAN #e
 #b outSquare $2 TRANMETA #e
 #b outSquare $2 \\ #e
