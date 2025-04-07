@@ -1733,17 +1733,6 @@ void RELALRParsing::selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Re
 	}
 }
 
-/*void RELALRParsing::computeCurrentMatchStr(vector<string>& partial_matcn_str, size_t last_contain_accept_state, vector<stackNode>& stateStack)
-{
-	partial_matcn_str.push_back(partial_matcn_str.back());
-	for (size_t j = last_contain_accept_state; j < stateStack.size() - 2; ++j)
-	{
-		string temp2(" ");
-		temp2[0] = stateStack[j].matchedChar;
-		partial_matcn_str.back() = partial_matcn_str.back() + temp2;
-	}
-}*/
-
 void RELALRParsing::computeCurrentMatchStr(string &partial_matcn_str, vector<stackNode>& stateStack, size_t end_stack_state_index)
 {
 	for (size_t j = 0; j <= end_stack_state_index; ++j)
@@ -1756,7 +1745,7 @@ void RELALRParsing::computeCurrentMatchStr(string &partial_matcn_str, vector<sta
 
 bool RELALRParsing::store_match(shared_ptr<vector<matchResult>> &finalresult, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end, 
 	vector<stackNode> &stateStack, streampos startPosition, ifstream& input,
-	/*bool TF, bool finish_store, */size_t acceptstate, match_type matchtype/*, vector<string>& partial_matcn_str, size_t& max_covered_index, size_t& last_contain_accept_state, long long trace*/ )
+	size_t acceptstate, match_type matchtype)
 {
 	map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>::iterator p = non_greedy_match_result_for_every_end.begin();
 	size_t end_stack_state_index;
@@ -1766,7 +1755,7 @@ bool RELALRParsing::store_match(shared_ptr<vector<matchResult>> &finalresult, ma
 	}
 	else
 	{
-		end_stack_state_index = stateStack.size() - 2;
+		end_stack_state_index = stateStack.size() - 1;
 		for (; ; --end_stack_state_index)
 		{
 			if (stateStack[end_stack_state_index].stateSet.find(acceptstate) != stateStack[end_stack_state_index].stateSet.end())
@@ -1787,157 +1776,6 @@ bool RELALRParsing::store_match(shared_ptr<vector<matchResult>> &finalresult, ma
 
 	string partial_matcn_str;
 	computeCurrentMatchStr(partial_matcn_str, stateStack, end_stack_state_index);
-	/*map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>::iterator q = p;
-	if (q != non_greedy_match_result_for_every_end.end())
-		++q;
-	while (q != non_greedy_match_result_for_every_end.end())
-	{
-		size_t size_p = 0;
-		size_t size_q = 0;
-		map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>::iterator p2 = p->second.begin();
-		map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>::iterator q2 = q->second.begin();
-		while (p2 != p->second.end() && q2 != q->second.end())
-		{
-			if (p2->first == q2->first)
-			{
-				map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>::iterator p3 = p2->second.begin();
-				map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>::iterator q3 = q2->second.begin();
-				while (p3 != p2->second.end() && q3 != q2->second.end())
-				{
-					if (p3->first == q3->first)
-					{
-						map<size_t, map<vector<stackNode>::size_type, size_t>>::iterator p4 = p3->second.begin();
-						map<size_t, map<vector<stackNode>::size_type, size_t>>::iterator q4 = q3->second.begin();
-						while (p4 != p3->second.end() && q4 != q3->second.end())
-						{
-							if (p4->first == q4->first)
-							{
-								map<vector<stackNode>::size_type, size_t>::iterator p5 = p4->second.begin();
-								map<vector<stackNode>::size_type, size_t>::iterator q5 = q4->second.begin();
-								while (p5 != p4->second.end() && q5 != q4->second.end())
-								{
-									if (p5->first == q5->first)
-									{
-										size_p += p5->second;
-										size_q += q5->second;
-										++p5;
-										++q5;
-									}
-									else if (p5->first < q5->first)
-									{
-										++p5;
-									}
-									else
-									{
-										++q5;
-									}
-								}
-								++p4;
-								++q4;
-							}
-							else if (p4->first < q4->first)
-							{
-								++p4;
-							}
-							else
-							{
-								++q4;
-							}
-						}
-						++p3;
-						++q3;
-					}
-					else if (p3->first < q3->first)
-					{
-						++p3;
-					}
-					else
-					{
-						++q3;
-					}
-				}
-				++p2;
-				++q2;
-			}
-			else if (p2->first < q2->first)
-			{
-				++p2;
-			}
-			else
-			{
-				++q2;
-			}
-		}
-
-		if (size_p <= size_q)
-			break;
-		p = q;
-		++q;
-	}
-
-	size_t original_max_covered_index = max_covered_index;
-	if (finish_store && stateStack[stateStack.size() - 2].stateSet.find(acceptstate) != stateStack[stateStack.size() - 2].stateSet.end() || finish_store == false)
-	{
-		if (finish_store)
-		{
-			computeCurrentMatchStr(partial_matcn_str, last_contain_accept_state, stateStack);
-		}
-
-		if (p != non_greedy_match_result_for_every_end.end())
-		{
-			vector<stackNode>::size_type i = p->first - 1;
-			if (partial_matcn_str[max_covered_index].size() < i)
-			{
-				size_t m = partial_matcn_str.size() - 2;
-				while (true)
-				{
-					if (partial_matcn_str[m].size() <= i)
-					{
-						if (partial_matcn_str[m].size() > partial_matcn_str[max_covered_index].size())
-						{
-							max_covered_index = m;
-						}
-						break;
-					}
-					--m;
-				}
-			}
-		}
-		else
-		{
-			max_covered_index = stateStack.size() - 3;
-		}
-	}
-	else
-	{
-		if (TF)
-			return false;
-		return true;
-	}*/
-
-	/*for (size_t j = original_max_covered_index + 1; j <= max_covered_index; ++j)
-	{
-		if (matchtype == match_type::POSITIVE_SURE_PRE)
-		{
-			input.seekg(-static_cast<long>(trace - partial_matcn_str[j].size()), ios::cur);
-			if (sp_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_start, prematch.pre_nomatch_accept) == true)
-			{
-				finalresult->push_back(matchResult(partial_matcn_str[j], startPosition));
-			}
-		}
-		else if (matchtype == match_type::POSITIVE_NEGA_PRE)
-		{
-			input.seekg(-static_cast<long>(trace - partial_matcn_str[j].size()), ios::cur);
-			if (sp_nomatch_match(input, *prematch.pre_nomatch_Graph, prematch.pre_nomatch_start, prematch.pre_nomatch_accept) == false)
-			{
-				finalresult->push_back(matchResult(partial_matcn_str[j], startPosition));
-			}
-		}
-		else if (matchtype == match_type::NEGATIVE_SURE_PRE || matchtype == match_type::NEGATIVE_NEGA_PRE || matchtype == match_type::COMMON)
-		{
-				finalresult->push_back(matchResult(partial_matcn_str[j], startPosition));
-		}
-	}*/
 
     if (matchtype == match_type::POSITIVE_SURE_PRE)
     {
@@ -1966,15 +1804,8 @@ bool RELALRParsing::store_match(shared_ptr<vector<matchResult>> &finalresult, ma
     else if (matchtype == match_type::NEGATIVE_SURE_PRE || matchtype == match_type::NEGATIVE_NEGA_PRE || matchtype == match_type::COMMON)
     {
 	    finalresult->push_back(matchResult(partial_matcn_str, startPosition));
-    }
-    
+    } 
 	return true;
-	/*if (finish_store)
-	{
-		if (TF == false)
-			return true;
-	}
-	return false;*/
 }
 
 shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &input, shared_ptr<Graph<vertex, edge>> &NFA, size_t startstate, size_t acceptstate, bool TF, match_type matchtype)//(反向引用编号,((子表达式开始态编号,子表达式结束态编号),(抵达子表达式开始态时对应栈节点编号,前述四项共同决定的匹配结果)))
@@ -2028,11 +1859,6 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 		map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> start_in_bound_related_to_nogreedy_start;
 		//start_in_bound状态编号,对应栈节点下标,对应nogreedy起始态下标,nogreedy起始态对应栈节点编号
 
-		//vector<string> partial_matcn_str = { "" };
-		//size_t last_contain_accept_state = 0;
-		//vector<bool> partial_matcn_str_used = { false };
-		//size_t max_covered_index = 0;
-		//long long trace = 0;
 		while (input >> ch)
 		{
 			CalClosure(*NFA, stateStack.back().stateSet, tranSubexpStartTemp);
@@ -2043,16 +1869,6 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 
 			ProcessSubExp(false, stateStack.back().stateSet, returnToSubExpStart, *NFA, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
 			selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, acceptstate, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, *NFA);
-			
-			/*if (last_contain_accept_state != 0)
-			{
-				if (stateStack.back().stateSet.find(acceptstate) != stateStack.back().stateSet.end())
-				{
-					computeCurrentMatchStr(partial_matcn_str, last_contain_accept_state, stateStack);
-					last_contain_accept_state = stateStack.size() - 1;
-					store_match(finalresult, non_greedy_match_result_for_every_end, stateStack, startPosition, input, true, false, acceptstate, matchtype, partial_matcn_str, max_covered_index, last_contain_accept_state, trace);
-				}
-			}*/
 
 
 			stackNode newstacknode;
@@ -2060,7 +1876,6 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 			CalNewState(false, non_greedy_match_result_for_every_end, non_greedy_tran, end, start, returnToSubExpStart, input, stateRelateSubExpStart, tranSubexpStartTemp, *NFA, stateStack, newstacknode, reverref_match_result, subExpMatch, ch, acceptstate, closure_nogreedy_match_count, closure_nogreedy_start_related_to_nogreedy_start, start_in_bound_related_to_nogreedy_start);
 			processReverrefMatch(input, *tranSubexpStartTemp, newstacknode, reverref_match_result);
 			stateStack.push_back(newstacknode);
-			//++trace;
 
 			if (stateStack.back().stateSet.empty() && reverref_match_result.empty() || input.peek() == EOF)
 			{
@@ -2072,10 +1887,6 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 					selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, acceptstate, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, *NFA);
 				}
 
-				/*if (store_match(finalresult, non_greedy_match_result_for_every_end, stateStack, startPosition, input, true, true, acceptstate, matchtype/*, partial_matcn_str, max_covered_index, last_contain_accept_state, trace))
-				{
-					return finalresult;
-				}*/
 				store_match(finalresult, non_greedy_match_result_for_every_end, stateStack, startPosition, input, acceptstate, matchtype);
 				input.seekg(startPosition);
 				input.seekg(1, ios::cur);
