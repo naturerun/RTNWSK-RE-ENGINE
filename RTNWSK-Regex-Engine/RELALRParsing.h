@@ -1,5 +1,6 @@
 #include "pch.h"
 #include <iostream>
+#include <sstream>
 #include <cctype>
 #include <algorithm>
 #include "LALRAutomata.h"
@@ -162,6 +163,7 @@ public:  //构造函数
 	}
 
 	shared_ptr<map<unsigned long, vector<RELALRParsing::matchResult>>> executeMatch(ofstream &output, ifstream &input);
+	bool match_str(const string &_str);
 	~RELALRParsing()
 	{
 		if (typeflag == match_type::COMMON)
@@ -174,8 +176,8 @@ public:  //构造函数
 		}
 	}
 private:
-	pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, set<vector<RELALRParsing::stackNode>::size_type>>>>> MatchCurrentCharacter(bool TF, map<size_t, set<size_t>> &insertIntoSetFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFristSecond, ifstream &input, const Graph<vertex, edge> &NFA, set<size_t> &initial_set, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, const map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch); //匹配当前读入的字符并在该字符上进行状态转移
-	static void processReverrefMatch(ifstream &input, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &tranSubexpStartTemp, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result);   //处理反向引用的匹配
+	pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, set<vector<RELALRParsing::stackNode>::size_type>>>>> MatchCurrentCharacter(bool TF, map<size_t, set<size_t>> &insertIntoSetFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFristSecond, istream &input, const Graph<vertex, edge> &NFA, set<size_t> &initial_set, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, const map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch); //匹配当前读入的字符并在该字符上进行状态转移
+	static void processReverrefMatch(istream &input, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &tranSubexpStartTemp, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result);   //处理反向引用的匹配
 	static void insertTranItemTomap(map<size_t, set<vector<stackNode>::size_type>> &tranItem, size_t goalstate, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &tranSubexpStartTemp);   //将给定传播项并入tranSubexpStartTemp
 	static void addTranItemForReverref(size_t goalstate, map<size_t, set<vector<stackNode>::size_type>> &subExpStartAndStackIndex, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &tranSubexpStartTemp);  //反向引用匹配成功时将反向引用开始匹配时的传播项并入tranSubexpStartTemp
 	static void clearDeadStateStackIndex(const Graph<vertex, edge> &NFA, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart);    //杀死不再传播的传播项
@@ -191,7 +193,7 @@ private:
 		map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end,
 		map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, vector<stackNode> &stateStack, Graph<vertex, edge> &NFA);
 	void CalNewState(bool is_reverse_match, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>>& non_greedy_match_result_for_every_end, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>& non_greedy_tran, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>>& end,
-		map<size_t, map<vector<stackNode>::size_type, map<string, bool>>>& start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>>& returnToSubExpStart, ifstream& input, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>& stateRelateSubExpStart,
+		map<size_t, map<vector<stackNode>::size_type, map<string, bool>>>& start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>>& returnToSubExpStart, istream& input, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>& stateRelateSubExpStart,
 		shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>& tranSubexpStartTemp, Graph<vertex, edge>& NFA, vector<stackNode>& stateStack, stackNode& newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>>& reverref_match_result,
 		map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>>& subExpMatch, const char ch, size_t acceptstate,
 		map<size_t, map<vector<stackNode>::size_type, size_t>>& closure_nogreedy_match_count, map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>>& closure_nogreedy_start_related_to_nogreedy_start,
@@ -1031,7 +1033,7 @@ void RELALRParsing::addNewTranItemIntoTemp(shared_ptr<map<size_t, map<size_t, se
 	}
 }
 //true匹配单词非单词边界行结束和行开始，false不匹配
-pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, set<vector<RELALRParsing::stackNode>::size_type>>>>> RELALRParsing::MatchCurrentCharacter(bool TF, map<size_t, set<size_t>> &insertIntoSetFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFristSecond, ifstream &input, const Graph<vertex, edge> &NFA, set<size_t> &initial_set, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, const map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch)
+pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, set<vector<RELALRParsing::stackNode>::size_type>>>>> RELALRParsing::MatchCurrentCharacter(bool TF, map<size_t, set<size_t>> &insertIntoSetFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFirst, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &addNewTranItemIntoTempFristSecond, istream &input, const Graph<vertex, edge> &NFA, set<size_t> &initial_set, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, const map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch)
 {
 	shared_ptr<map<size_t, set<size_t>>> tran_on_wordboundornobound = nullptr;
 	shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> wordboundornobound_tran_result = nullptr;
@@ -1308,7 +1310,7 @@ pair<shared_ptr<map<size_t, set<size_t>>>, shared_ptr<map<size_t, map<size_t, se
 	return { tran_on_wordboundornobound, wordboundornobound_tran_result };  //first为通过单词费单词边界以及行开始结束位置转移至的新状态和转移至新状态的状态集合的映射关系,second为传播至新状态的传播项集合
 }
 void RELALRParsing::CalNewState(bool is_reverse_match, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> &non_greedy_match_result_for_every_end, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> &non_greedy_tran, map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> &end,
-	map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, ifstream &input, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, 
+	map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> &start, map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> &returnToSubExpStart, istream &input, shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &stateRelateSubExpStart, 
 	shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> &tranSubexpStartTemp, Graph<vertex, edge> &NFA, vector<stackNode> &stateStack, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result, 
 	map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> &subExpMatch, const char ch, size_t acceptstate,
 	map<size_t, map<vector<stackNode>::size_type, size_t>> &closure_nogreedy_match_count, map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> &closure_nogreedy_start_related_to_nogreedy_start,
@@ -1610,7 +1612,7 @@ void RELALRParsing::addTranItemForReverref(size_t goalstate, map<size_t, set<vec
 	insertTranItemTomap(subExpStartAndStackIndex, goalstate, tranSubexpStartTemp);
 }
 
-void RELALRParsing::processReverrefMatch(ifstream &input, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &tranSubexpStartTemp, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result)
+void RELALRParsing::processReverrefMatch(istream &input, map<size_t, map<size_t, set<vector<stackNode>::size_type>>> &tranSubexpStartTemp, stackNode &newstacknode, map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> &reverref_match_result)
 {
 	auto p = reverref_match_result.find(input.tellg());
 	if (p != reverref_match_result.end())  //找到匹配的反向引用
@@ -1896,6 +1898,78 @@ shared_ptr<vector<RELALRParsing::matchResult>> RELALRParsing::match(ifstream &in
 	}
 	return finalresult;
 }
+
+bool RELALRParsing::match_str(const string& _str)
+{
+	if (typeflag != match_type::COMMON)
+	{
+		return false;
+	}
+
+	size_t startstate = commonmatch.start;
+	size_t acceptstate = commonmatch.accept;
+	shared_ptr<Graph<vertex, edge>>& NFA = commonmatch.NFA;
+
+	map<string, pair<pair<size_t, size_t>, map<vector<stackNode>::size_type, string>>> subExpMatch;
+	char ch;
+	std::istringstream input(_str);
+	vector<stackNode> stateStack;
+	stateStack.push_back(stackNode());
+	stateStack.back().stateSet.insert(startstate);
+	map<size_t, map<vector<stackNode>::size_type, map<string, bool>>> start; //(子表达式开始状态编号,(抵达子表达式开始态时的栈节点下标,(子表达式开始态对应的子表达式组号, 是否首次处理开始态+栈节点下标[true首次否则相反])))
+	map<size_t, map<size_t, map<vector<stackNode>::size_type, vector<stackNode>::size_type>>> end;    //(NFA结束状态编号, NFA结束状态对应栈节点下标)
+	shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> stateRelateSubExpStart = make_shared<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>();  //(栈节点中的状态号,(子表达式开始状态号，子表达式开始对应栈节点下标集))
+	map<size_t, pair<size_t, set<vector<stackNode>::size_type>>> returnToSubExpStart; //(子表达式开始态号,(相同的子表达式开始态号,子表达式开始态对应栈节点下标)) 匹配路径从给定子表达式开始态及对应栈节点重新回到给定子表达式开始态及对应栈节点时stateRelateSubExpStart会出现的元组
+	map<streampos, map<size_t, map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>> reverref_match_result;  //(反向引用匹配成功时文件指针位置,(反向引用匹配成功时应该转移到的状态,(反向引用转移的开始状态,存放和开始状态联系的子表达式开始状态加栈节点下标的map)))
+	shared_ptr<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>> tranSubexpStartTemp = make_shared<map<size_t, map<size_t, set<vector<stackNode>::size_type>>>>(); //更新stateRelateSubExpStart所用临时表
+	map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>> non_greedy_tran;
+	//(非贪婪匹配开始态号,(非贪婪匹配开始态对应栈节点下标, (非贪婪匹配结束态号, 非贪婪匹配结束态对应栈节点下标集合))）
+	map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, map<size_t, map<vector<stackNode>::size_type, size_t>>>>> non_greedy_match_result_for_every_end;
+	//(抵达NFA终止态对应的栈节点下标,(非贪婪匹配开始态号,(非贪婪匹配开始态对应栈节点下标, (非贪婪匹配结束态号, 非贪婪匹配结束态对应栈节点下标集合))))
+	map<size_t, map<vector<stackNode>::size_type, size_t>> closure_nogreedy_match_count;
+	//闭包非贪婪起始态号,对应栈节点下标,循环匹配次数
+	map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> closure_nogreedy_start_related_to_nogreedy_start;
+	//闭包非贪婪起始态号,对应栈节点下标,对应非贪婪起始态,非贪婪起始态对应栈节点下标
+	map<size_t, map<vector<stackNode>::size_type, map<size_t, set<vector<stackNode>::size_type>>>> start_in_bound_related_to_nogreedy_start;
+	//start_in_bound状态编号,对应栈节点下标,对应nogreedy起始态下标,nogreedy起始态对应栈节点编号
+
+	while (input >> ch)
+	{
+		CalClosure(*NFA, stateStack.back().stateSet, tranSubexpStartTemp);
+
+		clearDeadStateStackIndex(*NFA, stateRelateSubExpStart, tranSubexpStartTemp, start, returnToSubExpStart);
+		swap(stateRelateSubExpStart, tranSubexpStartTemp);
+		tranSubexpStartTemp->clear();
+
+		ProcessSubExp(false, stateStack.back().stateSet, returnToSubExpStart, *NFA, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, false, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+		selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, acceptstate, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, *NFA);
+
+
+		stackNode newstacknode;
+		stateStack.back().matchedChar = ch;
+		CalNewState(false, non_greedy_match_result_for_every_end, non_greedy_tran, end, start, returnToSubExpStart, input, stateRelateSubExpStart, tranSubexpStartTemp, *NFA, stateStack, newstacknode, reverref_match_result, subExpMatch, ch, acceptstate, closure_nogreedy_match_count, closure_nogreedy_start_related_to_nogreedy_start, start_in_bound_related_to_nogreedy_start);
+		processReverrefMatch(input, *tranSubexpStartTemp, newstacknode, reverref_match_result);
+		stateStack.push_back(newstacknode);
+
+		if (stateStack.back().stateSet.empty() && reverref_match_result.empty() || input.peek() == EOF)
+		{
+			if (stateStack.back().stateSet.empty() == false)
+			{
+				CalClosure(*NFA, stateStack.back().stateSet, tranSubexpStartTemp);
+				swap(stateRelateSubExpStart, tranSubexpStartTemp);
+				ProcessSubExp(false, stateStack.back().stateSet, returnToSubExpStart, *NFA, stateStack, start, end, subExpMatch, *stateRelateSubExpStart, non_greedy_tran, true, start_in_bound_related_to_nogreedy_start, closure_nogreedy_start_related_to_nogreedy_start, closure_nogreedy_match_count);
+				selectItemRelToEndFromNon_Greedy_TranIntoNon_Greedy_Match_Result_For_Every_End(stateRelateSubExpStart, acceptstate, non_greedy_match_result_for_every_end, non_greedy_tran, stateStack, *NFA);
+				if (stateStack.back().stateSet.find(acceptstate) != stateStack.back().stateSet.end())
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+	}
+	return false;
+}
+
 struct compare
 {
 	bool operator()(const pair<string, pair<string, string>>& left, const pair<string, pair<string, string>>& right) const
